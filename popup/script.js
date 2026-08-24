@@ -6,8 +6,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     items: state.items || [],
     canNavigate: state.canNavigate,
     embedded: true,
-    onSelect(item) {
-      browser.runtime.sendMessage({ type: "NAVIGATE", url: item.url });
+    onSelect(item, { newTab } = {}) {
+      browser.runtime.sendMessage({ type: "NAVIGATE", url: item.url, newTab });
     },
     onClose() {
       window.close();

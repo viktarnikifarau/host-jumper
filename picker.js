@@ -180,7 +180,7 @@ const HostJumperPicker = (() => {
           <input class="fp-search" type="search" placeholder="Search paths" autocomplete="off" spellcheck="false">
           <div class="fp-body"></div>
           <div class="fp-footer">
-            <span>Enter to open · Esc to close</span>
+            <span>${isMacPlatform() ? "Enter same tab · ⌘Enter new tab · Esc" : "Enter same tab · Ctrl+Enter new tab · Esc"}</span>
             <button class="fp-link" type="button">Configure paths</button>
           </div>
         </div>
@@ -204,12 +204,12 @@ const HostJumperPicker = (() => {
       root.innerHTML = "";
     }
 
-    function selectCurrent() {
+    function selectCurrent(event) {
       const item = filtered[selectedIndex];
       if (!item) {
         return;
       }
-      options.onSelect?.(item);
+      options.onSelect?.(item, { newTab: Boolean(event && isNewTabModifier(event)) });
     }
 
     function clampSelection() {
@@ -269,9 +269,9 @@ const HostJumperPicker = (() => {
           selectedIndex = index;
           updateSelection();
         });
-        button.addEventListener("click", () => {
+        button.addEventListener("click", (event) => {
           selectedIndex = index;
-          selectCurrent();
+          selectCurrent(event);
         });
         list.append(button);
       });
@@ -310,7 +310,7 @@ const HostJumperPicker = (() => {
       if (event.key === "Enter") {
         event.preventDefault();
         event.stopPropagation();
-        selectCurrent();
+        selectCurrent(event);
       }
     }
 
@@ -338,6 +338,14 @@ const HostJumperPicker = (() => {
     search.focus();
 
     return { close: teardown, focus: () => search.focus() };
+  }
+
+  function isMacPlatform() {
+    return /Mac|iPhone|iPad/.test(navigator.platform);
+  }
+
+  function isNewTabModifier(event) {
+    return isMacPlatform() ? event.metaKey : event.ctrlKey;
   }
 
   return { mount };

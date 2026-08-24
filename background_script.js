@@ -26,7 +26,7 @@ browser.runtime.onMessage.addListener((message, sender) => {
   }
 
   if (message?.type === "NAVIGATE") {
-    return navigateTo(message.url, sender.tab?.id);
+    return navigateTo(message.url, sender.tab?.id, message.newTab);
   }
 
   if (message?.type === "OPEN_OPTIONS") {
@@ -124,13 +124,27 @@ async function getItemsForTab(tab) {
   return HostJumper.buildPickerItems(paths, tab.url);
 }
 
-async function navigateTo(url, senderTabId) {
+async function navigateTo(url, senderTabId, newTab) {
   const tabId = pendingTabId || senderTabId;
-  if (!tabId || !url) {
+  if (!url) {
     return;
   }
 
-  await browser.tabs.update(tabId, { url, active: true });
+  if (newTab) {
+    const source = tabId ? await browser.tabs.get(tabId).catch(() => null) : null;
+    const createProperties = { url, active: true };
+    if (source?.id) {
+      createProperties.openerTabId = source.id;
+    }
+    if (source?.windowId != null) {
+      createProperties.windowId = source.windowId;
+    }
+    await browser.tabs.create(createProperties);
+  } else if (tabId) {
+    await browser.tabs.update(tabId, { url, active: true });
+  } else {
+    return;
+  }
 
   if (pickerWindowId != null) {
     try {

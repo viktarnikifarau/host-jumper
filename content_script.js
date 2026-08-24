@@ -28,8 +28,12 @@
 
     picker = HostJumperPicker.mount(shadow, {
       items,
-      onSelect(item) {
+      onSelect(item, { newTab } = {}) {
         closePicker();
+        if (newTab) {
+          browser.runtime.sendMessage({ type: "NAVIGATE", url: item.url, newTab: true });
+          return;
+        }
         window.location.assign(item.url);
       },
       onClose: closePicker,
