@@ -87,8 +87,12 @@ const HostJumperPicker = (() => {
     }
 
     .fp-item {
+      display: block;
       width: 100%;
+      max-width: 100%;
+      min-width: 0;
       padding: 10px 12px;
+      overflow: hidden;
       border: 0;
       border-radius: 10px;
       background: transparent;
@@ -102,18 +106,23 @@ const HostJumperPicker = (() => {
       background: #2e5bff;
     }
 
-    .fp-item-label {
+    .fp-item-label,
+    .fp-item-url {
       display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .fp-item-label {
       font-size: 14px;
       font-weight: 650;
     }
 
     .fp-item-url {
-      display: block;
       margin-top: 2px;
       color: #b9bbc6;
       font-size: 12px;
-      word-break: break-all;
     }
 
     .fp-item[aria-selected="true"] .fp-item-url {
@@ -250,10 +259,12 @@ const HostJumperPicker = (() => {
           <span class="fp-item-label"></span>
           <span class="fp-item-url"></span>
         `;
-        button.querySelector(".fp-item-label").textContent = item.label;
-        button.querySelector(".fp-item-url").textContent = item.missing?.length
+        const urlText = item.missing?.length
           ? `${item.url}  ·  missing {${item.missing.join(", ")}}`
           : item.url;
+        button.querySelector(".fp-item-label").textContent = item.label;
+        button.querySelector(".fp-item-url").textContent = urlText;
+        button.title = urlText;
         button.addEventListener("mouseenter", () => {
           selectedIndex = index;
           updateSelection();
