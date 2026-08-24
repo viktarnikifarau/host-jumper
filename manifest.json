@@ -30,7 +30,7 @@
   "commands": {
     "open-host-jumper": {
       "suggested_key": {
-        "default": "Ctrl+Shift+E",
+        "default": "Alt+Shift+E",
         "mac": "Command+Shift+E"
       },
       "description": "Open Host Jumper picker"
