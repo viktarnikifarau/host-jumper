@@ -60,12 +60,14 @@ const HostJumper = (() => {
     const url = new URL(currentUrl);
     const params = extractParams(currentUrl);
     const missing = [];
-    const resolvedPath = normalizePath(pathTemplate).replace(/\{([^{}]+)\}/g, (_, name) => {
-      if (params[name] == null || params[name] === "") {
-        missing.push(name);
+    const resolvedPath = normalizePath(pathTemplate).replace(/\{([^{}]+)\}/g, (_, placeholder) => {
+      const names = placeholder.split(",").map((name) => name.trim()).filter(Boolean);
+      const match = names.find((name) => params[name] != null && params[name] !== "");
+      if (!match) {
+        missing.push(placeholder.trim());
         return "";
       }
-      return encodeURIComponent(params[name]);
+      return encodeURIComponent(params[match]);
     });
 
     return {

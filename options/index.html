@@ -12,7 +12,7 @@
         <p>
           Save relative paths, then press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd>
           to jump to them on the current site. Placeholders such as <code>{id}</code>
-          are filled from the current page URL.
+          or <code>{id,object}</code> are filled from the current page URL.
         </p>
       </header>
 
@@ -25,14 +25,16 @@
           </label>
           <label>
             Path
-            <input id="path-input" type="text" placeholder="/user/detail?id={id}" required>
+            <input id="path-input" type="text" placeholder="/user?id={id,object}" required>
           </label>
           <button type="submit">Add path</button>
         </form>
         <p class="hint">
-          Examples: <code>/test</code>, <code>/cart</code>, <code>/shop?id={id}</code>.
+          Examples: <code>/test</code>, <code>/cart</code>,
+          <code>/user?id={id,object}</code>.
           Query parameters, hash parameters, and path segments
           (<code>{1}</code>, <code>{2}</code>, …) can be used as placeholders.
+          A list like <code>{id,object}</code> uses the first matching value.
         </p>
       </section>
 
