@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "Host Jumper",
   "description": "Jump to configured paths on the current host with placeholder substitution.",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "icons": {
     "64": "icons/icon.svg"
   },
@@ -30,8 +30,8 @@
   "commands": {
     "open-host-jumper": {
       "suggested_key": {
-        "default": "Ctrl+Shift+F",
-        "mac": "Command+Shift+F"
+        "default": "Ctrl+Shift+E",
+        "mac": "Command+Shift+E"
       },
       "description": "Open Host Jumper picker"
     }
