@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Host Jumper</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <main class="page">
+      <header>
+        <h1>Host Jumper</h1>
+        <p>
+          Save relative paths, then press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd>
+          to jump to them on the current site. Placeholders such as <code>{id}</code>
+          are filled from the current page URL.
+        </p>
+      </header>
+
+      <section class="card">
+        <h2>Add a path</h2>
+        <form id="add-form">
+          <label>
+            Label
+            <input id="label-input" type="text" placeholder="User details" maxlength="80">
+          </label>
+          <label>
+            Path
+            <input id="path-input" type="text" placeholder="/user/detail?id={id}" required>
+          </label>
+          <button type="submit">Add path</button>
+        </form>
+        <p class="hint">
+          Examples: <code>/test</code>, <code>/cart</code>, <code>/shop?id={id}</code>.
+          Query parameters, hash parameters, and path segments
+          (<code>{1}</code>, <code>{2}</code>, …) can be used as placeholders.
+        </p>
+      </section>
+
+      <section class="card">
+        <h2>Saved paths</h2>
+        <div id="path-list"></div>
+        <p id="empty-state" class="hint">No paths yet. Add one above.</p>
+      </section>
+
+      <section class="card">
+        <h2>Share configuration</h2>
+        <p class="hint">
+          Export a JSON file, then import it in another Firefox profile or machine.
+        </p>
+        <div class="share-actions">
+          <button type="button" id="export-btn">Export JSON</button>
+          <button type="button" id="import-btn" class="secondary">Import JSON</button>
+          <input id="import-file" type="file" accept="application/json,.json" hidden>
+        </div>
+        <div id="import-prompt" class="import-prompt" hidden>
+          <p>
+            This file has <strong id="import-count">0</strong> paths.
+            Replace the current list, or merge new paths into it?
+          </p>
+          <div class="share-actions">
+            <button type="button" id="import-replace">Replace</button>
+            <button type="button" id="import-merge" class="secondary">Merge</button>
+            <button type="button" id="import-cancel" class="secondary">Cancel</button>
+          </div>
+        </div>
+        <p id="share-status" class="hint" hidden></p>
+      </section>
+    </main>
+    <script src="../shared.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
