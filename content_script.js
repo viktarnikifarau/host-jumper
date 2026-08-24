@@ -1,8 +1,8 @@
 (() => {
-  if (window.__fastPagesInit) {
+  if (window.__hostJumperInit) {
     return;
   }
-  window.__fastPagesInit = true;
+  window.__hostJumperInit = true;
 
   let host = null;
   let picker = null;
@@ -22,11 +22,11 @@
 
   function openPicker(items) {
     host = document.createElement("div");
-    host.setAttribute("data-fast-pages", "true");
+    host.setAttribute("data-host-jumper", "true");
     const shadow = host.attachShadow({ mode: "closed" });
     document.documentElement.append(host);
 
-    picker = FastPagesPicker.mount(shadow, {
+    picker = HostJumperPicker.mount(shadow, {
       items,
       onSelect(item) {
         closePicker();

@@ -1,4 +1,4 @@
-const FastPagesPicker = (() => {
+const HostJumperPicker = (() => {
   const STYLE = `
     :host, .fp-root {
       all: initial;

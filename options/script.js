@@ -18,19 +18,19 @@ let pendingImport = null;
 document.addEventListener("DOMContentLoaded", render);
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
-  const path = FastPages.normalizePath(pathInput.value);
+  const path = HostJumper.normalizePath(pathInput.value);
   if (path === "/") {
     pathInput.focus();
     return;
   }
 
-  const paths = await FastPages.getPaths();
+  const paths = await HostJumper.getPaths();
   paths.push({
-    id: FastPages.createId(),
+    id: HostJumper.createId(),
     label: labelInput.value.trim(),
     path
   });
-  await FastPages.savePaths(paths);
+  await HostJumper.savePaths(paths);
   labelInput.value = "";
   pathInput.value = "";
   labelInput.focus();
@@ -38,7 +38,7 @@ form.addEventListener("submit", async (event) => {
 });
 
 async function render() {
-  const paths = await FastPages.getPaths();
+  const paths = await HostJumper.getPaths();
   listEl.innerHTML = "";
   emptyState.classList.toggle("is-hidden", paths.length > 0);
 
@@ -64,10 +64,10 @@ async function render() {
 
     labelField.addEventListener("change", () => updateItem(item.id, {
       label: labelField.value.trim(),
-      path: FastPages.normalizePath(pathField.value)
+      path: HostJumper.normalizePath(pathField.value)
     }));
     pathField.addEventListener("change", () => {
-      pathField.value = FastPages.normalizePath(pathField.value);
+      pathField.value = HostJumper.normalizePath(pathField.value);
       updateItem(item.id, {
         label: labelField.value.trim(),
         path: pathField.value
@@ -81,25 +81,25 @@ async function render() {
 }
 
 async function updateItem(id, changes) {
-  const paths = await FastPages.getPaths();
+  const paths = await HostJumper.getPaths();
   const next = paths.map((item) => item.id === id ? { ...item, ...changes } : item);
-  await FastPages.savePaths(next);
+  await HostJumper.savePaths(next);
 }
 
 async function deleteItem(id) {
-  const paths = await FastPages.getPaths();
-  await FastPages.savePaths(paths.filter((item) => item.id !== id));
+  const paths = await HostJumper.getPaths();
+  await HostJumper.savePaths(paths.filter((item) => item.id !== id));
   render();
 }
 
 exportBtn.addEventListener("click", async () => {
-  const paths = await FastPages.getPaths();
-  const config = FastPages.serializeConfig(paths);
+  const paths = await HostJumper.getPaths();
+  const config = HostJumper.serializeConfig(paths);
   const blob = new Blob([JSON.stringify(config, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = "fast-pages.json";
+  link.download = "host-jumper.json";
   document.body.append(link);
   link.click();
   link.remove();
@@ -119,10 +119,10 @@ importFile.addEventListener("change", async () => {
   }
 
   try {
-    const imported = FastPages.parseConfig(await file.text());
-    const current = await FastPages.getPaths();
+    const imported = HostJumper.parseConfig(await file.text());
+    const current = await HostJumper.getPaths();
     if (!current.length) {
-      await FastPages.savePaths(imported);
+      await HostJumper.savePaths(imported);
       hideImportPrompt();
       showShareStatus(`Imported ${imported.length} path${imported.length === 1 ? "" : "s"}.`);
       render();
@@ -143,7 +143,7 @@ importReplaceBtn.addEventListener("click", async () => {
   if (!pendingImport) {
     return;
   }
-  await FastPages.savePaths(pendingImport);
+  await HostJumper.savePaths(pendingImport);
   showShareStatus(`Replaced configuration with ${pendingImport.length} path${pendingImport.length === 1 ? "" : "s"}.`);
   hideImportPrompt();
   render();
@@ -153,10 +153,10 @@ importMergeBtn.addEventListener("click", async () => {
   if (!pendingImport) {
     return;
   }
-  const current = await FastPages.getPaths();
-  const merged = FastPages.mergePaths(current, pendingImport);
+  const current = await HostJumper.getPaths();
+  const merged = HostJumper.mergePaths(current, pendingImport);
   const added = merged.length - current.length;
-  await FastPages.savePaths(merged);
+  await HostJumper.savePaths(merged);
   showShareStatus(added ? `Merged ${added} new path${added === 1 ? "" : "s"}.` : "No new paths to merge.");
   hideImportPrompt();
   render();
@@ -180,7 +180,7 @@ function showShareStatus(message, isError = false) {
 }
 
 async function moveItem(index, delta) {
-  const paths = await FastPages.getPaths();
+  const paths = await HostJumper.getPaths();
   const nextIndex = index + delta;
   if (nextIndex < 0 || nextIndex >= paths.length) {
     return;
@@ -188,6 +188,6 @@ async function moveItem(index, delta) {
   const copy = paths.slice();
   const [item] = copy.splice(index, 1);
   copy.splice(nextIndex, 0, item);
-  await FastPages.savePaths(copy);
+  await HostJumper.savePaths(copy);
   render();
 }

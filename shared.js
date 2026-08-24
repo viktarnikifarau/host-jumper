@@ -1,4 +1,4 @@
-const FastPages = (() => {
+const HostJumper = (() => {
   const STORAGE_KEY = "paths";
   const EXPORT_VERSION = 1;
 

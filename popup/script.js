@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const root = document.getElementById("root");
   const state = await browser.runtime.sendMessage({ type: "GET_PICKER_STATE" });
 
-  FastPagesPicker.mount(root, {
+  HostJumperPicker.mount(root, {
     items: state.items || [],
     canNavigate: state.canNavigate,
     embedded: true,

@@ -120,8 +120,8 @@ async function getItemsForTab(tab) {
     return [];
   }
 
-  const paths = await FastPages.getPaths();
-  return FastPages.buildPickerItems(paths, tab.url);
+  const paths = await HostJumper.getPaths();
+  return HostJumper.buildPickerItems(paths, tab.url);
 }
 
 async function navigateTo(url, senderTabId) {
