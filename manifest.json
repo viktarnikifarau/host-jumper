@@ -1,8 +1,9 @@
 {
+  "author": "Viktar Nikifarau & contributors",
   "manifest_version": 2,
   "name": "Host Jumper",
   "description": "Jump to configured paths on the current host with placeholder substitution.",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "icons": {
     "64": "icons/icon.svg"
   },
@@ -30,15 +31,15 @@
   "commands": {
     "open-host-jumper": {
       "suggested_key": {
-        "default": "Shift+Alt+E",
-        "mac": "Command+Shift+E"
+        "default": "Ctrl+Shift+F",
+        "mac": "Ctrl+Shift+F"
       },
       "description": "Open Host Jumper picker"
     }
   },
   "browser_specific_settings": {
     "gecko": {
-      "id": "host-jumper@local",
+      "id": "host-jumper@chap.by",
       "strict_min_version": "140.0",
       "data_collection_permissions": {
         "required": ["none"]

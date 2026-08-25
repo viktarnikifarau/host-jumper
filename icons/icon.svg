@@ -1,4 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Host Jumper">
   <rect width="64" height="64" rx="16" fill="#2e5bff"/>
-  <path fill="#fff" d="M18 16h18a4 4 0 0 1 4 4v6h-6v-4H20v24h14v-4h6v6a4 4 0 0 1-4 4H18a4 4 0 0 1-4-4V20a4 4 0 0 1 4-4zm26.2 14.8-9.4 4.2 9.4 4.2-1.2 2.8L28 35.2V32.8l15-6.8 1.2 2.8z"/>
+  <g fill="#fff">
+    <rect x="14" y="12" width="9" height="40" rx="4.5"/>
+    <rect x="41" y="12" width="9" height="40" rx="4.5"/>
+    <path d="M19 27.5h11V20l17 12-17 12v-7.5H19z"/>
+  </g>
 </svg>
