@@ -1,6 +1,6 @@
 const HostJumperPicker = (() => {
   const STYLE = `
-    :host, .fp-root {
+    :host, .hd-root {
       all: initial;
       display: block;
       width: 100%;
@@ -13,7 +13,7 @@ const HostJumperPicker = (() => {
       box-sizing: border-box;
     }
 
-    .fp-overlay {
+    .hd-overlay {
       position: fixed;
       inset: 0;
       z-index: 2147483647;
@@ -24,7 +24,7 @@ const HostJumperPicker = (() => {
       background: rgba(9, 10, 15, 0.52);
     }
 
-    .fp-dialog {
+    .hd-dialog {
       width: min(480px, 100%);
       max-height: min(420px, 100%);
       display: flex;
@@ -36,8 +36,8 @@ const HostJumperPicker = (() => {
       box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
     }
 
-    .fp-root.is-embedded,
-    .fp-root.is-embedded .fp-overlay {
+    .hd-root.is-embedded,
+    .hd-root.is-embedded .hd-overlay {
       position: static;
       inset: auto;
       width: 100%;
@@ -46,7 +46,7 @@ const HostJumperPicker = (() => {
       background: #1c1d24;
     }
 
-    .fp-root.is-embedded .fp-dialog {
+    .hd-root.is-embedded .hd-dialog {
       width: 100%;
       max-height: none;
       height: 100%;
@@ -55,7 +55,7 @@ const HostJumperPicker = (() => {
       box-shadow: none;
     }
 
-    .fp-search {
+    .hd-search {
       width: 100%;
       padding: 16px 18px 14px;
       border: 0;
@@ -67,18 +67,18 @@ const HostJumperPicker = (() => {
       outline: none;
     }
 
-    .fp-search::placeholder {
+    .hd-search::placeholder {
       color: #8b8d97;
     }
 
-    .fp-body {
+    .hd-body {
       display: flex;
       flex: 1;
       min-height: 0;
       overflow: hidden;
     }
 
-    .fp-list {
+    .hd-list {
       flex: 1;
       margin: 0;
       padding: 8px;
@@ -86,7 +86,7 @@ const HostJumperPicker = (() => {
       list-style: none;
     }
 
-    .fp-item {
+    .hd-item {
       display: block;
       width: 100%;
       max-width: 100%;
@@ -102,38 +102,38 @@ const HostJumperPicker = (() => {
       cursor: pointer;
     }
 
-    .fp-item[aria-selected="true"] {
+    .hd-item[aria-selected="true"] {
       background: #2e5bff;
     }
 
-    .fp-item-label,
-    .fp-item-url {
+    .hd-item-label,
+    .hd-item-url {
       display: block;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
-    .fp-item-label {
+    .hd-item-label {
       font-size: 14px;
       font-weight: 650;
     }
 
-    .fp-item-url {
+    .hd-item-url {
       margin-top: 2px;
       color: #b9bbc6;
       font-size: 12px;
     }
 
-    .fp-item[aria-selected="true"] .fp-item-url {
+    .hd-item[aria-selected="true"] .hd-item-url {
       color: rgba(255, 255, 255, 0.86);
     }
 
-    .fp-item.is-missing .fp-item-url {
+    .hd-item.is-missing .hd-item-url {
       color: #ffb4a2;
     }
 
-    .fp-empty, .fp-error {
+    .hd-empty, .hd-error {
       padding: 28px 18px;
       color: #b9bbc6;
       font-size: 14px;
@@ -141,7 +141,7 @@ const HostJumperPicker = (() => {
       text-align: center;
     }
 
-    .fp-footer {
+    .hd-footer {
       display: flex;
       justify-content: space-between;
       gap: 12px;
@@ -151,7 +151,7 @@ const HostJumperPicker = (() => {
       font-size: 11px;
     }
 
-    .fp-link {
+    .hd-link {
       padding: 0;
       border: 0;
       background: none;
@@ -167,32 +167,49 @@ const HostJumperPicker = (() => {
     let filtered = items.slice();
     let selectedIndex = 0;
 
-    root.innerHTML = "";
     const wrap = document.createElement("div");
-    wrap.className = `fp-root${embedded ? " is-embedded" : ""}`;
+    wrap.className = embedded ? "hd-root is-embedded" : "hd-root";
 
     const style = document.createElement("style");
     style.textContent = STYLE;
 
-    wrap.innerHTML = `
-      <div class="fp-overlay">
-        <div class="fp-dialog" role="dialog" aria-modal="true" aria-label="Host Jumper">
-          <input class="fp-search" type="search" placeholder="Search paths" autocomplete="off" spellcheck="false">
-          <div class="fp-body"></div>
-          <div class="fp-footer">
-            <span>${isMacPlatform() ? "Enter same tab · ⌘Enter new tab · Esc" : "Enter same tab · Ctrl+Enter new tab · Esc"}</span>
-            <button class="fp-link" type="button">Configure paths</button>
-          </div>
-        </div>
-      </div>
-    `;
+    const overlay = document.createElement("div");
+    overlay.className = "hd-overlay";
 
-    root.append(style, wrap);
+    const dialog = document.createElement("div");
+    dialog.className = "hd-dialog";
+    dialog.setAttribute("role", "dialog");
+    dialog.setAttribute("aria-modal", "true");
+    dialog.setAttribute("aria-label", "Host Jumper");
 
-    const overlay = wrap.querySelector(".fp-overlay");
-    const search = wrap.querySelector(".fp-search");
-    const body = wrap.querySelector(".fp-body");
-    const configure = wrap.querySelector(".fp-link");
+    const search = document.createElement("input");
+    search.className = "hd-search";
+    search.type = "search";
+    search.placeholder = "Search paths";
+    search.autocomplete = "off";
+    search.spellcheck = false;
+
+    const body = document.createElement("div");
+    body.className = "hd-body";
+
+    const footer = document.createElement("div");
+    footer.className = "hd-footer";
+
+    const hint = document.createElement("span");
+    hint.textContent = isMacPlatform()
+      ? "Enter same tab · ⌘Enter new tab · Esc"
+      : "Enter same tab · Ctrl+Enter new tab · Esc";
+
+    const configure = document.createElement("button");
+    configure.className = "hd-link";
+    configure.type = "button";
+    configure.textContent = "Configure paths";
+
+    footer.append(hint, configure);
+    dialog.append(search, body, footer);
+    overlay.append(dialog);
+    wrap.append(overlay);
+    root.replaceChildren(style, wrap);
 
     function close() {
       teardown();
@@ -201,7 +218,7 @@ const HostJumperPicker = (() => {
 
     function teardown() {
       window.removeEventListener("keydown", onKeyDown, true);
-      root.innerHTML = "";
+      root.replaceChildren();
     }
 
     function selectCurrent(event) {
@@ -221,7 +238,7 @@ const HostJumperPicker = (() => {
     }
 
     function updateSelection() {
-      const buttons = body.querySelectorAll(".fp-item");
+      const buttons = body.querySelectorAll(".hd-item");
       buttons.forEach((button, index) => {
         button.setAttribute("aria-selected", String(index === selectedIndex));
       });
@@ -230,41 +247,46 @@ const HostJumperPicker = (() => {
 
     function render() {
       if (!options.canNavigate && options.embedded) {
-        body.innerHTML = `<div class="fp-error">Open a regular web page first, then use Host Jumper.</div>`;
+        body.replaceChildren(statusMessage("hd-error", "Open a regular web page first, then use Host Jumper."));
         return;
       }
 
       if (!items.length) {
-        body.innerHTML = `<div class="fp-empty">No paths configured yet. Add a few in the options page.</div>`;
+        body.replaceChildren(statusMessage("hd-empty", "No paths configured yet. Add a few in the options page."));
         return;
       }
 
       if (!filtered.length) {
-        body.innerHTML = `<div class="fp-empty">No matching paths.</div>`;
+        body.replaceChildren(statusMessage("hd-empty", "No matching paths."));
         return;
       }
 
       clampSelection();
       const list = document.createElement("div");
-      list.className = "fp-list";
+      list.className = "hd-list";
       list.setAttribute("role", "listbox");
 
       filtered.forEach((item, index) => {
         const button = document.createElement("button");
         button.type = "button";
-        button.className = `fp-item${item.missing?.length ? " is-missing" : ""}`;
+        button.className = item.missing?.length ? "hd-item is-missing" : "hd-item";
         button.setAttribute("role", "option");
         button.setAttribute("aria-selected", String(index === selectedIndex));
-        button.innerHTML = `
-          <span class="fp-item-label"></span>
-          <span class="fp-item-url"></span>
-        `;
+
         const urlText = item.missing?.length
           ? `${item.url}  ·  missing {${item.missing.join(", ")}}`
           : item.url;
-        button.querySelector(".fp-item-label").textContent = item.label;
-        button.querySelector(".fp-item-url").textContent = urlText;
+
+        const labelEl = document.createElement("span");
+        labelEl.className = "hd-item-label";
+        labelEl.textContent = item.label;
+
+        const urlEl = document.createElement("span");
+        urlEl.className = "hd-item-url";
+        urlEl.textContent = urlText;
+
         button.title = urlText;
+        button.append(labelEl, urlEl);
         button.addEventListener("mouseenter", () => {
           selectedIndex = index;
           updateSelection();
@@ -276,8 +298,7 @@ const HostJumperPicker = (() => {
         list.append(button);
       });
 
-      body.innerHTML = "";
-      body.append(list);
+      body.replaceChildren(list);
       updateSelection();
     }
 
@@ -338,6 +359,13 @@ const HostJumperPicker = (() => {
     search.focus();
 
     return { close: teardown, focus: () => search.focus() };
+  }
+
+  function statusMessage(className, text) {
+    const message = document.createElement("div");
+    message.className = className;
+    message.textContent = text;
+    return message;
   }
 
   function isMacPlatform() {
