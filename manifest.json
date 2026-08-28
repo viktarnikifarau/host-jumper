@@ -2,7 +2,7 @@
   "author": "Viktar Nikifarau & contributors",
   "manifest_version": 2,
   "name": "Host Jumper",
-  "description": "Jump to configured paths on the current host with placeholder substitution.",
+  "description": "Jump to saved paths on the current site, filling placeholders from the page URL.",
   "version": "0.1.6",
   "icons": {
     "64": "icons/icon.svg"
