@@ -1,0 +1,53 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check tag matches manifest version
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          version="$(node -p "require('./manifest.json').version")"
+          if [ "$tag" != "$version" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match manifest version $version."
+            exit 1
+          fi
+
+      - name: Lint
+        run: npx --yes web-ext@10 lint
+
+      - name: Package
+        run: npx --yes web-ext@10 build --overwrite-dest
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version="$(node -p "require('./manifest.json').version")"
+          shopt -s nullglob
+          zips=(web-ext-artifacts/*.zip)
+          if [ "${#zips[@]}" -ne 1 ]; then
+            echo "Expected one zip in web-ext-artifacts, found ${#zips[@]}."
+            exit 1
+          fi
+          gh release create "$GITHUB_REF_NAME" "${zips[0]}" \
+            --title "Host Jumper $version" \
+            --generate-notes \
+            --verify-tag

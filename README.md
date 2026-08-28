@@ -13,7 +13,12 @@ Choose a path to replace the current origin's path, query, and hash, leaving
 
 - [Firefox] 140 or later
 
-## Install from source
+## Install
+
+Install the signed add-on from [AMO].
+Firefox keeps that build across restarts.
+
+### From source
 
 Clone this repository, then load it as a temporary add-on while you develop
   or review the code:
@@ -22,20 +27,39 @@ Clone this repository, then load it as a temporary add-on while you develop
 2. Click **Load Temporary Add-on**.
 3. Select `manifest.json` in the repository root.
 
-[web-ext] can also run a live reload session from the repository root:
+Firefox unloads a temporary add-on when the browser restarts.
+
+[web-ext] can run a live reload session from the repository root.
+That command needs [Node.js] 22 or later:
 
 ```sh
 npx web-ext run
 ```
 
-Package a zip for [AMO] or sideloading:
+### From a GitHub Release
+
+Download `host_jumper-*.zip` from a [GitHub Release].
+Load the zip as a temporary add-on:
+  choose the zip in the **Load Temporary Add-on** file dialog.
+
+The GitHub zip is unsigned.
+Release Firefox will not install it as a permanent add-on.
+
+## Build
+
+This repository has no bundler.
+[web-ext] packages the files Firefox already loads.
+Linting and packaging need [Node.js] 22 or later.
+
+From the repository root:
 
 ```sh
+npx web-ext lint
 npx web-ext build
 ```
 
-The output lands in `web-ext-artifacts/`.
-Firefox unloads a temporary add-on when the browser restarts.
+`web-ext lint` checks the manifest and source.
+`web-ext build` writes `host_jumper-{version}.zip` under `web-ext-artifacts/`.
 
 ## Usage
 
@@ -130,13 +154,15 @@ Design decisions live in [ARCHITECTURE.md].
 [MIT] © 2026 Viktar Nikifarau
 
 [Firefox]: https://www.mozilla.org/firefox/
+[Node.js]: https://nodejs.org/
 [WebExtension]: https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions
 [URL]: https://url.spec.whatwg.org/
 [web-ext]: https://extensionworkshop.com/documentation/develop/getting-started-with-web-ext/
-[AMO]: https://addons.mozilla.org/
+[AMO]: https://addons.mozilla.org/firefox/addon/host-jumper/
 [JSON]: https://www.json.org/json-en.html
 [storage.local]: https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/storage/local
 [Manifest V2]: https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/manifest_version
 [Shadow DOM]: https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_shadow_DOM
 [ARCHITECTURE.md]: ARCHITECTURE.md
+[GitHub Release]: https://github.com/viktarnikifarau/host-jumper/releases
 [MIT]: LICENSE
