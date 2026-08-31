@@ -1,7 +1,7 @@
 # Host Jumper
 
-Host Jumper is a [Firefox] [WebExtension] that jumps to saved relative paths on
-  the current site.
+Host Jumper is a [Firefox] and [Chrome] [WebExtension] that jumps to saved
+  relative paths on the current site.
 Each path can include `{placeholders}` filled from the current page [URL].
 
 Open the picker with `Ctrl+Shift+F` (the same chord on macOS) or the toolbar
@@ -12,6 +12,7 @@ Choose a path to replace the current origin's path, query, and hash, leaving
 ## Requirements
 
 - [Firefox] 140 or later
+- [Chrome] 121 or later
 
 ## Install
 
@@ -20,8 +21,10 @@ Firefox keeps that build across restarts.
 
 ### From source
 
-Clone this repository, then load it as a temporary add-on while you develop
-  or review the code:
+Clone this repository, then load it unpacked while you develop or review
+  the code.
+
+Firefox:
 
 1. Open `about:debugging#/runtime/this-firefox`.
 2. Click **Load Temporary Add-on**.
@@ -29,18 +32,26 @@ Clone this repository, then load it as a temporary add-on while you develop
 
 Firefox unloads a temporary add-on when the browser restarts.
 
+Chrome:
+
+1. Open `chrome://extensions`.
+2. Enable **Developer mode**.
+3. Click **Load unpacked** and select the repository root.
+
 [web-ext] can run a live reload session from the repository root.
 That command needs [Node.js] 22 or later:
 
 ```sh
 npx web-ext run
+npx web-ext run -t chromium
 ```
 
 ### From a GitHub Release
 
 Download `host_jumper-*.zip` from a [GitHub Release].
-Load the zip as a temporary add-on:
+In Firefox, load the zip as a temporary add-on:
   choose the zip in the **Load Temporary Add-on** file dialog.
+In Chrome, unzip it and use **Load unpacked** on the extracted folder.
 
 The GitHub zip is unsigned.
 Release Firefox will not install it as a permanent add-on.
@@ -48,7 +59,7 @@ Release Firefox will not install it as a permanent add-on.
 ## Build
 
 This repository has no bundler.
-[web-ext] packages the files Firefox already loads.
+[web-ext] packages the files Firefox and Chrome already load.
 Linting and packaging need [Node.js] 22 or later.
 
 From the repository root:
@@ -63,8 +74,8 @@ npx web-ext build
 
 ## Usage
 
-1. Open the options page from the picker (**Configure paths**) or from
-  `about:addons`.
+1. Open the options page from the picker (**Configure paths**), from
+  `about:addons`, or from `chrome://extensions`.
 2. Add a label and a path such as `/cart` or `/user?id={id,object}`.
 3. On any `http:` or `https:` page, open the picker.
 4. Type to filter, then press `Enter` to open the path in the same tab.
@@ -117,7 +128,7 @@ A bare JSON array of strings or `{ "label", "path" }` objects is also accepted.
 
 ## Permissions
 
-The extension requests three permissions.
+The extension requests four permissions.
 It collects no data (`data_collection_permissions.required` is `none` in
   `manifest.json`).
 
@@ -126,24 +137,27 @@ It collects no data (`data_collection_permissions.required` is `none` in
 | `storage` | Save the path list in [storage.local] |
 | `tabs` | Read the current tab URL, update it, and open a new tab |
 | `activeTab` | Inject the picker into the page the user invoked it on |
+| `scripting` | Run [scripting.executeScript] after that user gesture |
 
 No host permission is declared.
-The background script injects `picker.js` and `content_script.js` only after
-  the user opens the picker on an `http:` or `https:` tab.
-It skips `https://addons.mozilla.org/`.
+The background script injects `shim.js`, `picker.js`, and `content_script.js`
+  only after the user opens the picker on an `http:` or `https:` tab.
+It skips `https://addons.mozilla.org/` and the Chrome Web Store.
 
 ## Repository layout
 
 | Path | Role |
 | --- | --- |
-| `manifest.json` | [Manifest V2] metadata, permissions, commands, gecko id |
+| `manifest.json` | [Manifest V3] metadata, permissions, commands, gecko id |
+| `shim.js` | Alias `chrome` as `browser` when the `browser` global is missing |
 | `shared.js` | `HostJumper`: placeholders, storage, JSON import/export |
+| `background.js` | Chrome service worker entry; `importScripts` of the files below |
 | `background_script.js` | Toolbar, shortcut, injection, navigation |
 | `picker.js` | Picker UI used by the overlay and the popup window |
 | `content_script.js` | Overlay host and closed [Shadow DOM] |
 | `popup/` | Fallback picker window when the page cannot be injected |
 | `options/` | Path editor, export, and import |
-| `icons/` | Toolbar icon |
+| `icons/` | Toolbar PNG icons; `icon.svg` is the source |
 
 ## Architecture
 
@@ -154,6 +168,7 @@ Design decisions live in [ARCHITECTURE.md].
 [MIT] © 2026 Viktar Nikifarau
 
 [Firefox]: https://www.mozilla.org/firefox/
+[Chrome]: https://www.google.com/chrome/
 [Node.js]: https://nodejs.org/
 [WebExtension]: https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions
 [URL]: https://url.spec.whatwg.org/
@@ -161,7 +176,8 @@ Design decisions live in [ARCHITECTURE.md].
 [AMO]: https://addons.mozilla.org/firefox/addon/host-jumper/
 [JSON]: https://www.json.org/json-en.html
 [storage.local]: https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/storage/local
-[Manifest V2]: https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/manifest_version
+[Manifest V3]: https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/manifest_version
+[scripting.executeScript]: https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/scripting/executeScript
 [Shadow DOM]: https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_shadow_DOM
 [ARCHITECTURE.md]: ARCHITECTURE.md
 [GitHub Release]: https://github.com/viktarnikifarau/host-jumper/releases

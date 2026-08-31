@@ -1,10 +1,15 @@
 const PICKER_WIDTH = 480;
 const PICKER_HEIGHT = 420;
+const SESSION_PENDING_TAB = "pendingTabId";
+const SESSION_PICKER_WINDOW = "pickerWindowId";
+const PICKER_FILES = ["shim.js", "picker.js", "content_script.js"];
+const BLOCKED_URL_PREFIXES = [
+  "https://addons.mozilla.org/",
+  "https://chrome.google.com/webstore",
+  "https://chromewebstore.google.com/"
+];
 
-let pendingTabId = null;
-let pickerWindowId = null;
-
-browser.browserAction.onClicked.addListener(() => {
+browser.action.onClicked.addListener(() => {
   openPicker();
 });
 
@@ -15,9 +20,7 @@ browser.commands.onCommand.addListener((command) => {
 });
 
 browser.windows.onRemoved.addListener((windowId) => {
-  if (windowId === pickerWindowId) {
-    pickerWindowId = null;
-  }
+  clearPickerWindowId(windowId);
 });
 
 browser.runtime.onMessage.addListener((message, sender) => {
@@ -43,7 +46,7 @@ async function openPicker() {
     return;
   }
 
-  pendingTabId = tab.id;
+  await setSessionValue(SESSION_PENDING_TAB, tab.id);
 
   if (!isInjectableUrl(tab.url)) {
     await openPickerWindow();
@@ -64,8 +67,10 @@ async function toggleOrOpenOverlay(tab) {
       items: await getItemsForTab(tab)
     });
   } catch (error) {
-    await browser.tabs.executeScript(tab.id, { file: "picker.js" });
-    await browser.tabs.executeScript(tab.id, { file: "content_script.js" });
+    await browser.scripting.executeScript({
+      target: { tabId: tab.id },
+      files: PICKER_FILES
+    });
     await browser.tabs.sendMessage(tab.id, {
       type: "TOGGLE_PICKER",
       items: await getItemsForTab(tab)
@@ -74,13 +79,14 @@ async function toggleOrOpenOverlay(tab) {
 }
 
 async function openPickerWindow() {
-  if (pickerWindowId != null) {
+  const existingId = await getSessionValue(SESSION_PICKER_WINDOW);
+  if (existingId != null) {
     try {
-      await browser.windows.remove(pickerWindowId);
+      await browser.windows.remove(existingId);
     } catch (error) {
       // Window may already have been closed.
     }
-    pickerWindowId = null;
+    await setSessionValue(SESSION_PICKER_WINDOW, null);
   }
 
   const currentWindow = await browser.windows.getCurrent();
@@ -95,7 +101,7 @@ async function openPickerWindow() {
     top
   });
 
-  pickerWindowId = popup.id;
+  await setSessionValue(SESSION_PICKER_WINDOW, popup.id);
   try {
     await browser.windows.update(popup.id, { left, top, width: PICKER_WIDTH, height: PICKER_HEIGHT });
   } catch (error) {
@@ -104,6 +110,7 @@ async function openPickerWindow() {
 }
 
 async function getPickerState() {
+  const pendingTabId = await getSessionValue(SESSION_PENDING_TAB);
   const tab = pendingTabId != null
     ? await browser.tabs.get(pendingTabId).catch(() => null)
     : await getActiveTab();
@@ -125,6 +132,7 @@ async function getItemsForTab(tab) {
 }
 
 async function navigateTo(url, senderTabId, newTab) {
+  const pendingTabId = await getSessionValue(SESSION_PENDING_TAB);
   const tabId = pendingTabId || senderTabId;
   if (!url) {
     return;
@@ -146,14 +154,7 @@ async function navigateTo(url, senderTabId, newTab) {
     return;
   }
 
-  if (pickerWindowId != null) {
-    try {
-      await browser.windows.remove(pickerWindowId);
-    } catch (error) {
-      // Already closed.
-    }
-    pickerWindowId = null;
-  }
+  await closePickerWindow();
 }
 
 async function getActiveTab() {
@@ -162,5 +163,39 @@ async function getActiveTab() {
 }
 
 function isInjectableUrl(url) {
-  return Boolean(url) && /^https?:/i.test(url) && !url.startsWith("https://addons.mozilla.org/");
+  return Boolean(url) && /^https?:/i.test(url) && !BLOCKED_URL_PREFIXES.some((prefix) => url.startsWith(prefix));
+}
+
+async function closePickerWindow() {
+  const pickerWindowId = await getSessionValue(SESSION_PICKER_WINDOW);
+  if (pickerWindowId == null) {
+    return;
+  }
+
+  try {
+    await browser.windows.remove(pickerWindowId);
+  } catch (error) {
+    // Already closed.
+  }
+  await setSessionValue(SESSION_PICKER_WINDOW, null);
+}
+
+async function clearPickerWindowId(windowId) {
+  const pickerWindowId = await getSessionValue(SESSION_PICKER_WINDOW);
+  if (windowId === pickerWindowId) {
+    await setSessionValue(SESSION_PICKER_WINDOW, null);
+  }
+}
+
+async function getSessionValue(key) {
+  const data = await browser.storage.session.get(key);
+  return data[key] ?? null;
+}
+
+async function setSessionValue(key, value) {
+  if (value == null) {
+    await browser.storage.session.remove(key);
+    return;
+  }
+  await browser.storage.session.set({ [key]: value });
 }
