@@ -29,7 +29,11 @@ browser.runtime.onMessage.addListener((message, sender) => {
   }
 
   if (message?.type === "NAVIGATE") {
-    return navigateTo(message.url, sender.tab?.id, message.newTab);
+    return navigateTo(message.url, sender.tab?.id, message.newTab, message.pathId);
+  }
+
+  if (message?.type === "RECORD_USAGE") {
+    return HostJumper.incrementPathUse(message.id);
   }
 
   if (message?.type === "OPEN_OPTIONS") {
@@ -131,7 +135,7 @@ async function getItemsForTab(tab) {
   return HostJumper.buildPickerItems(paths, tab.url);
 }
 
-async function navigateTo(url, senderTabId, newTab) {
+async function navigateTo(url, senderTabId, newTab, pathId) {
   const pendingTabId = await getSessionValue(SESSION_PENDING_TAB);
   const tabId = pendingTabId || senderTabId;
   if (!url) {
@@ -154,7 +158,11 @@ async function navigateTo(url, senderTabId, newTab) {
     return;
   }
 
-  await closePickerWindow();
+  try {
+    await HostJumper.incrementPathUse(pathId);
+  } finally {
+    await closePickerWindow();
+  }
 }
 
 async function getActiveTab() {

@@ -81,6 +81,11 @@ Do not send path lists to a server.
 If the file format changes, bump `EXPORT_VERSION` and extend `serializeConfig`
   / `parseConfig`.
 
+Each path may carry a local `uses` count, incremented when the user jumps to it.
+`serializeConfig` writes only `label` and `path`.
+`parseConfig` always sets `uses` to 0, even if a file includes a count.
+Usage is machine-local, so a copied configuration starts unused.
+
 The MV3 background can be killed while idle, so in-memory globals do not
   survive.
 `pendingTabId` and `pickerWindowId` live in [storage.session].

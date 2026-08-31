@@ -125,6 +125,8 @@ Import can replace the saved list or merge by path (duplicates are skipped).
 
 A bare JSON array of strings or `{ "label", "path" }` objects is also accepted.
 `parseConfig` in `shared.js` assigns new ids on import.
+Usage counts stay in [storage.local] and are not written to or read from this
+  file, so imported paths start at 0 uses.
 
 ## Permissions
 

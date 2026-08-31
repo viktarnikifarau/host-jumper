@@ -31,9 +31,10 @@
       onSelect(item, { newTab } = {}) {
         closePicker();
         if (newTab) {
-          browser.runtime.sendMessage({ type: "NAVIGATE", url: item.url, newTab: true });
+          browser.runtime.sendMessage({ type: "NAVIGATE", url: item.url, newTab: true, pathId: item.id });
           return;
         }
+        browser.runtime.sendMessage({ type: "RECORD_USAGE", id: item.id });
         window.location.assign(item.url);
       },
       onClose: closePicker,

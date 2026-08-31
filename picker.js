@@ -106,6 +106,15 @@ const HostJumperPicker = (() => {
       background: #2e5bff;
     }
 
+    .hd-item-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      width: 100%;
+      min-width: 0;
+    }
+
     .hd-item-label,
     .hd-item-url {
       display: block;
@@ -115,8 +124,22 @@ const HostJumperPicker = (() => {
     }
 
     .hd-item-label {
+      flex: 1;
+      min-width: 0;
       font-size: 14px;
       font-weight: 650;
+    }
+
+    .hd-item-uses {
+      flex: 0 0 auto;
+      color: #8b8d97;
+      font-size: 11px;
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .hd-item[aria-selected="true"] .hd-item-uses {
+      color: rgba(255, 255, 255, 0.78);
     }
 
     .hd-item-url {
@@ -277,16 +300,28 @@ const HostJumperPicker = (() => {
           ? `${item.url}  ·  missing {${item.missing.join(", ")}}`
           : item.url;
 
+        const headEl = document.createElement("span");
+        headEl.className = "hd-item-head";
+
         const labelEl = document.createElement("span");
         labelEl.className = "hd-item-label";
         labelEl.textContent = item.label;
+        headEl.append(labelEl);
+
+        const uses = Number(item.uses) || 0;
+        if (uses > 0) {
+          const usesEl = document.createElement("span");
+          usesEl.className = "hd-item-uses";
+          usesEl.textContent = uses === 1 ? "1 use" : `${uses} uses`;
+          headEl.append(usesEl);
+        }
 
         const urlEl = document.createElement("span");
         urlEl.className = "hd-item-url";
         urlEl.textContent = urlText;
 
         button.title = urlText;
-        button.append(labelEl, urlEl);
+        button.append(headEl, urlEl);
         button.addEventListener("mouseenter", () => {
           selectedIndex = index;
           updateSelection();

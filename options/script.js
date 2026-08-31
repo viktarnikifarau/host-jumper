@@ -28,7 +28,8 @@ form.addEventListener("submit", async (event) => {
   paths.push({
     id: HostJumper.createId(),
     label: labelInput.value.trim(),
-    path
+    path,
+    uses: 0
   });
   await HostJumper.savePaths(paths);
   labelInput.value = "";
@@ -48,6 +49,7 @@ async function render() {
     row.innerHTML = `
       <input class="label-field" type="text" maxlength="80">
       <input class="path-field" type="text">
+      <span class="uses-field"></span>
       <div class="row-actions">
         <button type="button" class="up" title="Move up">Up</button>
         <button type="button" class="down" title="Move down">Down</button>
@@ -57,10 +59,13 @@ async function render() {
 
     const labelField = row.querySelector(".label-field");
     const pathField = row.querySelector(".path-field");
+    const usesField = row.querySelector(".uses-field");
     labelField.value = item.label || "";
     pathField.value = item.path;
     labelField.placeholder = "Label";
     pathField.placeholder = "/path?id={id}";
+    usesField.textContent = HostJumper.formatUses(item.uses);
+    usesField.title = "Times this path has been opened on this browser";
 
     labelField.addEventListener("change", () => updateItem(item.id, {
       label: labelField.value.trim(),

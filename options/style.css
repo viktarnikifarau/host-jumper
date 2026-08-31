@@ -128,11 +128,19 @@ button.secondary {
 
 .row {
   display: grid;
-  grid-template-columns: 180px 1fr auto;
+  grid-template-columns: 180px 1fr max-content auto;
   gap: 12px;
   align-items: center;
   padding: 10px 0;
   border-top: 1px solid var(--line);
+}
+
+.uses-field {
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
 }
 
 .row:first-child {
@@ -175,5 +183,9 @@ kbd, code {
   form,
   .row {
     grid-template-columns: 1fr;
+  }
+
+  .uses-field {
+    text-align: left;
   }
 }

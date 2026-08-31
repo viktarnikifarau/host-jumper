@@ -76,6 +76,19 @@ const HostJumper = (() => {
     };
   }
 
+  function normalizeUses(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n) || n <= 0) {
+      return 0;
+    }
+    return Math.floor(n);
+  }
+
+  function formatUses(value) {
+    const uses = normalizeUses(value);
+    return uses === 1 ? "1 use" : `${uses} uses`;
+  }
+
   function buildPickerItems(paths, currentUrl) {
     return (paths || []).map((item) => {
       const resolved = resolvePath(item.path, currentUrl);
@@ -83,6 +96,7 @@ const HostJumper = (() => {
         id: item.id,
         label: item.label || item.path,
         path: item.path,
+        uses: normalizeUses(item.uses),
         url: resolved.url,
         missing: resolved.missing
       };
@@ -96,6 +110,26 @@ const HostJumper = (() => {
 
   async function savePaths(paths) {
     await browser.storage.local.set({ [STORAGE_KEY]: paths });
+  }
+
+  async function incrementPathUse(id) {
+    if (!id) {
+      return;
+    }
+
+    const paths = await getPaths();
+    let changed = false;
+    const next = paths.map((item) => {
+      if (item.id !== id) {
+        return item;
+      }
+      changed = true;
+      return { ...item, uses: normalizeUses(item.uses) + 1 };
+    });
+
+    if (changed) {
+      await savePaths(next);
+    }
   }
 
   function serializeConfig(paths) {
@@ -134,7 +168,7 @@ const HostJumper = (() => {
       .map((item) => {
         if (typeof item === "string") {
           const path = normalizePath(item);
-          return path === "/" ? null : { id: createId(), label: "", path };
+          return path === "/" ? null : { id: createId(), label: "", path, uses: 0 };
         }
 
         if (!item || typeof item !== "object") {
@@ -149,7 +183,8 @@ const HostJumper = (() => {
         return {
           id: createId(),
           label: String(item.label || "").trim(),
-          path
+          path,
+          uses: 0
         };
       })
       .filter(Boolean);
@@ -182,10 +217,13 @@ const HostJumper = (() => {
     createId,
     extractParams,
     normalizePath,
+    normalizeUses,
+    formatUses,
     resolvePath,
     buildPickerItems,
     getPaths,
     savePaths,
+    incrementPathUse,
     serializeConfig,
     parseConfig,
     mergePaths
