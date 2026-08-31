@@ -32,7 +32,7 @@
     "open-host-jumper": {
       "suggested_key": {
         "default": "Ctrl+Shift+F",
-        "mac": "Ctrl+Shift+F"
+        "mac": "MacCtrl+Shift+F"
       },
       "description": "Open Host Jumper picker"
     }
