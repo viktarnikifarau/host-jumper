@@ -16,8 +16,8 @@ Choose a path to replace the current origin's path, query, and hash, leaving
 
 ## Install
 
-Install the signed add-on from [AMO].
-Firefox keeps that build across restarts.
+Install the signed add-on from [AMO] or [Chrome Web Store].
+Browsers keeps that build across restarts.
 
 ### From source
 
@@ -176,6 +176,7 @@ Design decisions live in [ARCHITECTURE.md].
 [URL]: https://url.spec.whatwg.org/
 [web-ext]: https://extensionworkshop.com/documentation/develop/getting-started-with-web-ext/
 [AMO]: https://addons.mozilla.org/firefox/addon/host-jumper/
+[Chrome Web Store]: https://chromewebstore.google.com/detail/host-jumper/nogfefnephnobbmhmiagadolpjebpibk
 [JSON]: https://www.json.org/json-en.html
 [storage.local]: https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/storage/local
 [Manifest V3]: https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/manifest_version
