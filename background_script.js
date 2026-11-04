@@ -9,6 +9,35 @@ const BLOCKED_URL_PREFIXES = [
   "https://chromewebstore.google.com/"
 ];
 
+const bookmarkSearchIndex = HostJumperBookmarkSearch.createIndex(browser.bookmarks);
+const bookmarkOmnibox = HostJumperBookmarkOmnibox.createController({
+  index: bookmarkSearchIndex,
+  omnibox: browser.omnibox,
+  tabs: browser.tabs
+});
+bookmarkOmnibox.attach();
+
+function reportBookmarkIndexError(error) {
+  console.error("Unable to update the bookmark index:", error);
+}
+
+browser.bookmarks.onCreated.addListener((id, node) => {
+  bookmarkSearchIndex.onCreated(id, node).catch(reportBookmarkIndexError);
+});
+browser.bookmarks.onChanged.addListener((id, changeInfo) => {
+  bookmarkSearchIndex.onChanged(id, changeInfo).catch(reportBookmarkIndexError);
+});
+browser.bookmarks.onRemoved.addListener((id) => {
+  bookmarkSearchIndex.onRemoved(id).catch(reportBookmarkIndexError);
+});
+browser.bookmarks.onMoved.addListener((id, moveInfo) => {
+  bookmarkSearchIndex.onMoved(id, moveInfo).catch(reportBookmarkIndexError);
+});
+browser.bookmarks.onImportEnded?.addListener(() => {
+  bookmarkSearchIndex.onImportEnded().catch(reportBookmarkIndexError);
+});
+bookmarkSearchIndex.ready().catch(reportBookmarkIndexError);
+
 browser.action.onClicked.addListener(() => {
   openPicker();
 });

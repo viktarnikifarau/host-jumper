@@ -65,6 +65,7 @@ Linting and packaging need [Node.js] 22 or later.
 From the repository root:
 
 ```sh
+node --test tests/*.test.js
 npx web-ext lint
 npx web-ext build
 ```
@@ -83,6 +84,25 @@ npx web-ext build
 
 The picker is an overlay on injectable pages.
 On privileged URLs, or when injection fails, it opens as a small window instead.
+
+### Bookmark search
+
+Type `hj`, a space, and a query in the browser address bar to search bookmarks.
+Every whitespace-separated token must match the bookmark's full folder path,
+  title, or URL; token order does not matter.
+Results show the readable path and open the bookmark URL in the current tab.
+Use the browser's new-tab omnibox action to open a result in another tab.
+
+For a bookmark titled **Server 1** under **CI > CI-1**, the query
+  `hj ci-1 server 1` returns `CI > CI-1 > Server 1`.
+Folder-only queries such as `hj ci ci-1` also work.
+Folder matches, especially exact and consecutive folder segments, rank above
+  title matches, which rank above URL-only matches.
+
+To check updates manually, rename or move a folder and repeat its old and new
+  path queries, then remove it and confirm its descendants no longer appear.
+Duplicate bookmark titles remain separate suggestions with distinct paths.
+An empty query returns no bookmark suggestions.
 
 ### Placeholders
 
@@ -130,7 +150,7 @@ Usage counts stay in [storage.local] and are not written to or read from this
 
 ## Permissions
 
-The extension requests four permissions.
+The extension requests five permissions.
 It collects no data (`data_collection_permissions.required` is `none` in
   `manifest.json`).
 
@@ -140,6 +160,7 @@ It collects no data (`data_collection_permissions.required` is `none` in
 | `tabs` | Read the current tab URL, update it, and open a new tab |
 | `activeTab` | Inject the picker into the page the user invoked it on |
 | `scripting` | Run [scripting.executeScript] after that user gesture |
+| `bookmarks` | Index bookmark folders, titles, and URLs for omnibox search |
 
 No host permission is declared.
 The background script injects `shim.js`, `picker.js`, and `content_script.js`
@@ -154,11 +175,14 @@ It skips `https://addons.mozilla.org/` and the Chrome Web Store.
 | `shim.js` | Alias `chrome` as `browser` when the `browser` global is missing |
 | `shared.js` | `HostJumper`: placeholders, storage, JSON import/export |
 | `background.js` | Chrome service worker entry; `importScripts` of the files below |
-| `background_script.js` | Toolbar, shortcut, injection, navigation |
+| `background_script.js` | Toolbar, shortcut, injection, navigation, bookmark events |
+| `bookmark_search.js` | Cached bookmark-tree index, token matching, and ranking |
+| `bookmark_omnibox.js` | Debounced omnibox suggestions and tab navigation |
 | `picker.js` | Picker UI used by the overlay and the popup window |
 | `content_script.js` | Overlay host and closed [Shadow DOM] |
 | `popup/` | Fallback picker window when the page cannot be injected |
 | `options/` | Path editor, export, and import |
+| `tests/` | Node tests for bookmark indexing, events, ranking, and omnibox UI |
 | `icons/` | Toolbar and page icons; `icon.svg` is the source |
 
 ## Architecture

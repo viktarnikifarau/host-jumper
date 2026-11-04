@@ -15,12 +15,18 @@
     "storage",
     "tabs",
     "activeTab",
-    "scripting"
+    "scripting",
+    "bookmarks"
   ],
+  "omnibox": {
+    "keyword": "hj"
+  },
   "background": {
     "scripts": [
       "shim.js",
       "shared.js",
+      "bookmark_search.js",
+      "bookmark_omnibox.js",
       "background_script.js"
     ],
     "service_worker": "background.js"
