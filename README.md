@@ -159,7 +159,7 @@ It skips `https://addons.mozilla.org/` and the Chrome Web Store.
 | `content_script.js` | Overlay host and closed [Shadow DOM] |
 | `popup/` | Fallback picker window when the page cannot be injected |
 | `options/` | Path editor, export, and import |
-| `icons/` | Toolbar PNG icons; `icon.svg` is the source |
+| `icons/` | Toolbar and page icons; `icon.svg` is the source |
 
 ## Architecture
 
