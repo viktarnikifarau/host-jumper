@@ -16,8 +16,8 @@ Firefox still uses a non-persistent event page
 Chrome 121+ ignores `background.scripts` next to `service_worker`; older
   Chrome refuses the extra key.
 Declare both: `scripts` for Firefox (`shim.js`, `shared.js`,
-  `bookmark_search.js`, `background_script.js`) and `service_worker` for Chrome
-  (`background.js`).
+  `bookmark_search.js`, `bookmark_client.js`, `path_picker_client.js`,
+  `background_script.js`) and `service_worker` for Chrome (`background.js`).
 `background.js` may only call `importScripts`.
 Do not call `importScripts` from `background_script.js`; that throws in the
   Firefox event page.
@@ -39,8 +39,10 @@ On injectable pages the picker is an overlay in the tab.
 On privileged URLs (`about:`, `chrome:`, AMO, Chrome Web Store, non-`http(s)`)
   or failed injection, `openPickerWindow` opens `popup/index.html` as a
   480×420 window.
-Both surfaces call `HostJumperPicker.mount` in `picker.js` (the window passes
-  `embedded: true`).
+Both surfaces call `HostJumperPicker.mount` in `picker.js` with the
+  `pathpicker` variant (the window passes `embedded: true`).
+`path_picker_client.js` centralizes path state, navigation, usage, options, and
+  overlay-toggle messages for the popup, content script, and background.
 Change picker behavior in `picker.js`; do not fork markup into `popup/`.
 
 The overlay attaches a closed [Shadow DOM] so host CSS cannot restyle the
@@ -66,10 +68,13 @@ Creation, change, removal, and move events update only the affected node or
 Serialize those updates through the index queue so they cannot race the initial
   build or one another.
 The `open-bookmark-search` command opens `popup/index.html?mode=bookmarks`.
-`popup/script.js` selects bookmark mode, while `picker.js` owns debounce,
-  stale-input suppression, result rendering, and keyboard interaction.
-`SEARCH_BOOKMARKS` and `NAVIGATE_BOOKMARK` messages connect that shared UI to
-  the background index and tabs API.
+`popup/script.js` selects the `bookmarks` picker variant and supplies a
+  `HostJumperBookmarkClient` data source.
+Variant presets in `picker.js` own variant-specific labels and status messages;
+  the picker owns debounce, stale-input suppression, rendering, and keyboard
+  interaction.
+`bookmark_client.js` centralizes the `bookmarks.search` and `bookmarks.open`
+  protocol used by both the popup and background script.
 Bookmark popup state uses separate session keys from the saved-path picker.
 
 Chrome content scripts and extension pages expose `chrome`, not `browser`.

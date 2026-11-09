@@ -9,7 +9,9 @@ function loadScripts(names, globals = {}) {
     vm.runInContext(source, context, { filename: name });
   }
   return vm.runInContext(`({
-    HostJumperBookmarkSearch: typeof HostJumperBookmarkSearch === "undefined" ? undefined : HostJumperBookmarkSearch
+    HostJumperBookmarkSearch: typeof HostJumperBookmarkSearch === "undefined" ? undefined : HostJumperBookmarkSearch,
+    HostJumperBookmarkClient: typeof HostJumperBookmarkClient === "undefined" ? undefined : HostJumperBookmarkClient,
+    HostJumperPathPickerClient: typeof HostJumperPathPickerClient === "undefined" ? undefined : HostJumperPathPickerClient
   })`, context);
 }
 

@@ -192,7 +192,30 @@ const HostJumperPicker = (() => {
     }
   `;
 
+  const VARIANTS = {
+    pathpicker: {
+      ariaLabel: "Host Jumper",
+      searchPlaceholder: "Search paths",
+      emptyMessage: "No paths configured yet. Add a few in the options page.",
+      noResultsMessage: "No matching paths.",
+      searchErrorMessage: "Search is unavailable.",
+      showConfigure: true
+    },
+    bookmarks: {
+      canNavigate: true,
+      ariaLabel: "Bookmark search",
+      searchPlaceholder: "Search bookmarks by folder, title, or URL",
+      emptyMessage: "Type to search bookmark folders, titles, and URLs.",
+      noResultsMessage: "No matching bookmarks.",
+      searchErrorMessage: "Bookmark search is unavailable.",
+      showConfigure: false,
+      searchDebounceMs: 150
+    }
+  };
+
   function mount(root, options) {
+    const variant = VARIANTS[options.variant || "pathpicker"] || VARIANTS.pathpicker;
+    options = { ...variant, ...options };
     let items = (options.items || []).slice();
     const embedded = Boolean(options.embedded);
     let filtered = items.slice();
@@ -214,12 +237,12 @@ const HostJumperPicker = (() => {
     dialog.className = "hd-dialog";
     dialog.setAttribute("role", "dialog");
     dialog.setAttribute("aria-modal", "true");
-    dialog.setAttribute("aria-label", options.ariaLabel || "Host Jumper");
+    dialog.setAttribute("aria-label", options.ariaLabel);
 
     const search = document.createElement("input");
     search.className = "hd-search";
     search.type = "search";
-    search.placeholder = options.searchPlaceholder || "Search paths";
+    search.placeholder = options.searchPlaceholder;
     search.autocomplete = "off";
     search.spellcheck = false;
 
@@ -240,7 +263,7 @@ const HostJumperPicker = (() => {
     configure.textContent = "Configure paths";
 
     footer.append(hint);
-    if (options.showConfigure !== false) {
+    if (options.showConfigure) {
       footer.append(configure);
     }
     dialog.append(search, body, footer);
@@ -294,21 +317,19 @@ const HostJumperPicker = (() => {
       }
 
       if (searchFailed) {
-        body.replaceChildren(statusMessage("hd-error", options.searchErrorMessage || "Search is unavailable."));
+        body.replaceChildren(statusMessage("hd-error", options.searchErrorMessage));
         return;
       }
 
       if (!items.length) {
         const hasQuery = Boolean(search.value.trim());
-        const message = hasQuery
-          ? options.noResultsMessage || "No matching paths."
-          : options.emptyMessage || "No paths configured yet. Add a few in the options page.";
+        const message = hasQuery ? options.noResultsMessage : options.emptyMessage;
         body.replaceChildren(statusMessage("hd-empty", message));
         return;
       }
 
       if (!filtered.length) {
-        body.replaceChildren(statusMessage("hd-empty", options.noResultsMessage || "No matching paths."));
+        body.replaceChildren(statusMessage("hd-empty", options.noResultsMessage));
         return;
       }
 
@@ -407,7 +428,7 @@ const HostJumperPicker = (() => {
 
     async function runSearch(query, revision) {
       try {
-        const results = await options.onSearch(query);
+        const results = await options.dataSource.search(query);
         if (revision !== searchRevision) {
           return;
         }
@@ -431,7 +452,7 @@ const HostJumperPicker = (() => {
       selectedIndex = 0;
       searchFailed = false;
 
-      if (options.onSearch) {
+      if (options.dataSource) {
         searchRevision += 1;
         const revision = searchRevision;
         if (searchTimer != null) {

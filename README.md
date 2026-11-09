@@ -165,8 +165,9 @@ It collects no data (`data_collection_permissions.required` is `none` in
 | `bookmarks` | Index bookmark folders, titles, and URLs for popup search |
 
 No host permission is declared.
-The background script injects `shim.js`, `picker.js`, and `content_script.js`
-  only after the user opens the picker on an `http:` or `https:` tab.
+The background script injects `shim.js`, `path_picker_client.js`, `picker.js`,
+  and `content_script.js` only after the user opens the picker on an `http:` or
+  `https:` tab.
 It skips `https://addons.mozilla.org/` and the Chrome Web Store.
 
 ## Repository layout
@@ -179,7 +180,9 @@ It skips `https://addons.mozilla.org/` and the Chrome Web Store.
 | `background.js` | Chrome service worker entry; `importScripts` of the files below |
 | `background_script.js` | Toolbar, shortcut, injection, navigation, bookmark events |
 | `bookmark_search.js` | Cached bookmark-tree index, token matching, and ranking |
-| `picker.js` | Shared picker UI, local filtering, and debounced async search |
+| `bookmark_client.js` | Shared bookmark message protocol and popup data source |
+| `path_picker_client.js` | Shared path-picker protocol for popup and overlay clients |
+| `picker.js` | Shared picker variants, local filtering, and debounced async search |
 | `content_script.js` | Overlay host and closed [Shadow DOM] |
 | `popup/` | Fallback path picker and shortcut-opened bookmark search window |
 | `options/` | Path editor, export, and import |

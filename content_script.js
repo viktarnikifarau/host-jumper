@@ -6,9 +6,10 @@
 
   let host = null;
   let picker = null;
+  const pathPickerClient = HostJumperPathPickerClient.create(browser.runtime);
 
   browser.runtime.onMessage.addListener((message) => {
-    if (message?.type !== "TOGGLE_PICKER") {
+    if (message?.type !== HostJumperPathPickerClient.MESSAGES.TOGGLE) {
       return;
     }
 
@@ -27,20 +28,21 @@
     document.documentElement.append(host);
 
     picker = HostJumperPicker.mount(shadow, {
+      variant: "pathpicker",
       items,
       onSelect(item, { newTab } = {}) {
         closePicker();
         if (newTab) {
-          browser.runtime.sendMessage({ type: "NAVIGATE", url: item.url, newTab: true, pathId: item.id });
+          pathPickerClient.open(item.url, true, item.id);
           return;
         }
-        browser.runtime.sendMessage({ type: "RECORD_USAGE", id: item.id });
+        pathPickerClient.recordUsage(item.id);
         window.location.assign(item.url);
       },
       onClose: closePicker,
       onConfigure() {
         closePicker();
-        browser.runtime.sendMessage({ type: "OPEN_OPTIONS" });
+        pathPickerClient.openOptions();
       }
     });
   }

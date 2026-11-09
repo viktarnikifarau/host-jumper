@@ -113,7 +113,7 @@ test("manifest registers the bookmark shortcut without omnibox integration", () 
 
 test("shortcut opens bookmark popup, searches, navigates, and closes it", async () => {
   const { api, session } = createBrowser();
-  loadScripts(["shared.js", "bookmark_search.js", "background_script.js"], { browser: api });
+  loadScripts(["shared.js", "bookmark_search.js", "bookmark_client.js", "path_picker_client.js", "background_script.js"], { browser: api });
 
   await api.commands.onCommand.listeners[0]("open-bookmark-search");
   assert.equal(api.windows.created.length, 1);
@@ -122,13 +122,13 @@ test("shortcut opens bookmark popup, searches, navigates, and closes it", async 
   assert.equal(session.bookmarkWindowId, 42);
 
   const onMessage = api.runtime.onMessage.listeners[0];
-  const results = await onMessage({ type: "SEARCH_BOOKMARKS", query: "ci-1 server 1" }, {});
+  const results = await onMessage({ type: "bookmarks.search", query: "ci-1 server 1" }, {});
   assert.equal(results.length, 1);
   assert.equal(results[0].title, "Server 1");
   assert.equal(results[0].displayPath, "CI > CI-1 > Server 1");
   assert.equal(results[0].url, "https://server1.ci.example.test/");
 
-  await onMessage({ type: "NAVIGATE_BOOKMARK", url: results[0].url, newTab: false }, {});
+  await onMessage({ type: "bookmarks.open", url: results[0].url, newTab: false }, {});
   assert.deepEqual(plain(api.tabs.updates), [{
     id: 17,
     url: "https://server1.ci.example.test/",
@@ -140,12 +140,12 @@ test("shortcut opens bookmark popup, searches, navigates, and closes it", async 
 
 test("bookmark popup can open a new tab next to its source tab", async () => {
   const { api } = createBrowser();
-  loadScripts(["shared.js", "bookmark_search.js", "background_script.js"], { browser: api });
+  loadScripts(["shared.js", "bookmark_search.js", "bookmark_client.js", "path_picker_client.js", "background_script.js"], { browser: api });
   await api.commands.onCommand.listeners[0]("open-bookmark-search");
 
   const onMessage = api.runtime.onMessage.listeners[0];
   const url = "https://server1.ci.example.test/";
-  await onMessage({ type: "NAVIGATE_BOOKMARK", url, newTab: true }, {});
+  await onMessage({ type: "bookmarks.open", url, newTab: true }, {});
 
   assert.deepEqual(plain(api.tabs.created), [{
     url,

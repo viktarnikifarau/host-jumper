@@ -5,7 +5,7 @@ const SESSION_PICKER_WINDOW = "pickerWindowId";
 const SESSION_BOOKMARK_SOURCE_TAB = "bookmarkSourceTabId";
 const SESSION_BOOKMARK_WINDOW = "bookmarkWindowId";
 const BOOKMARK_RESULT_LIMIT = 50;
-const PICKER_FILES = ["shim.js", "picker.js", "content_script.js"];
+const PICKER_FILES = ["shim.js", "path_picker_client.js", "picker.js", "content_script.js"];
 const BLOCKED_URL_PREFIXES = [
   "https://addons.mozilla.org/",
   "https://chrome.google.com/webstore",
@@ -55,27 +55,27 @@ browser.windows.onRemoved.addListener((windowId) => {
 });
 
 browser.runtime.onMessage.addListener((message, sender) => {
-  if (message?.type === "GET_PICKER_STATE") {
+  if (message?.type === HostJumperPathPickerClient.MESSAGES.GET_STATE) {
     return getPickerState();
   }
 
-  if (message?.type === "NAVIGATE") {
+  if (message?.type === HostJumperPathPickerClient.MESSAGES.OPEN) {
     return navigateTo(message.url, sender.tab?.id, message.newTab, message.pathId);
   }
 
-  if (message?.type === "SEARCH_BOOKMARKS") {
+  if (message?.type === HostJumperBookmarkClient.MESSAGES.SEARCH) {
     return bookmarkSearchIndex.search(message.query, { limit: BOOKMARK_RESULT_LIMIT });
   }
 
-  if (message?.type === "NAVIGATE_BOOKMARK") {
+  if (message?.type === HostJumperBookmarkClient.MESSAGES.OPEN) {
     return navigateBookmark(message.url, sender.tab?.id, message.newTab);
   }
 
-  if (message?.type === "RECORD_USAGE") {
+  if (message?.type === HostJumperPathPickerClient.MESSAGES.RECORD_USAGE) {
     return HostJumper.incrementPathUse(message.id);
   }
 
-  if (message?.type === "OPEN_OPTIONS") {
+  if (message?.type === HostJumperPathPickerClient.MESSAGES.OPEN_OPTIONS) {
     browser.runtime.openOptionsPage();
     return Promise.resolve();
   }
@@ -112,7 +112,7 @@ async function openPicker() {
 async function toggleOrOpenOverlay(tab) {
   try {
     await browser.tabs.sendMessage(tab.id, {
-      type: "TOGGLE_PICKER",
+      type: HostJumperPathPickerClient.MESSAGES.TOGGLE,
       items: await getItemsForTab(tab)
     });
   } catch (error) {
@@ -121,7 +121,7 @@ async function toggleOrOpenOverlay(tab) {
       files: PICKER_FILES
     });
     await browser.tabs.sendMessage(tab.id, {
-      type: "TOGGLE_PICKER",
+      type: HostJumperPathPickerClient.MESSAGES.TOGGLE,
       items: await getItemsForTab(tab)
     });
   }
