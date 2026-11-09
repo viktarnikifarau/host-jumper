@@ -87,22 +87,24 @@ On privileged URLs, or when injection fails, it opens as a small window instead.
 
 ### Bookmark search
 
-Type `hj`, a space, and a query in the browser address bar to search bookmarks.
+Open the bookmark popup with `Alt+Shift+B` on Linux/Windows or
+  `MacCtrl+Shift+B` on macOS.
 Every whitespace-separated token must match the bookmark's full folder path,
   title, or URL; token order does not matter.
-Results show the readable path and open the bookmark URL in the current tab.
-Use the browser's new-tab omnibox action to open a result in another tab.
+Each result shows the bookmark name, full readable path, and URL.
+Press `Enter` to open it in the current tab, or `Ctrl+Enter` (`⌘Enter` on macOS)
+  to open a new tab.
 
 For a bookmark titled **Server 1** under **CI > CI-1**, the query
-  `hj ci-1 server 1` returns `CI > CI-1 > Server 1`.
-Folder-only queries such as `hj ci ci-1` also work.
+  `ci-1 server 1` returns `CI > CI-1 > Server 1`.
+Folder-only queries such as `ci ci-1` also work.
 Folder matches, especially exact and consecutive folder segments, rank above
   title matches, which rank above URL-only matches.
 
 To check updates manually, rename or move a folder and repeat its old and new
   path queries, then remove it and confirm its descendants no longer appear.
-Duplicate bookmark titles remain separate suggestions with distinct paths.
-An empty query returns no bookmark suggestions.
+Duplicate bookmark titles remain separate results with distinct paths.
+An empty query shows the search prompt and no bookmark results.
 
 ### Placeholders
 
@@ -160,7 +162,7 @@ It collects no data (`data_collection_permissions.required` is `none` in
 | `tabs` | Read the current tab URL, update it, and open a new tab |
 | `activeTab` | Inject the picker into the page the user invoked it on |
 | `scripting` | Run [scripting.executeScript] after that user gesture |
-| `bookmarks` | Index bookmark folders, titles, and URLs for omnibox search |
+| `bookmarks` | Index bookmark folders, titles, and URLs for popup search |
 
 No host permission is declared.
 The background script injects `shim.js`, `picker.js`, and `content_script.js`
@@ -177,12 +179,11 @@ It skips `https://addons.mozilla.org/` and the Chrome Web Store.
 | `background.js` | Chrome service worker entry; `importScripts` of the files below |
 | `background_script.js` | Toolbar, shortcut, injection, navigation, bookmark events |
 | `bookmark_search.js` | Cached bookmark-tree index, token matching, and ranking |
-| `bookmark_omnibox.js` | Debounced omnibox suggestions and tab navigation |
-| `picker.js` | Picker UI used by the overlay and the popup window |
+| `picker.js` | Shared picker UI, local filtering, and debounced async search |
 | `content_script.js` | Overlay host and closed [Shadow DOM] |
-| `popup/` | Fallback picker window when the page cannot be injected |
+| `popup/` | Fallback path picker and shortcut-opened bookmark search window |
 | `options/` | Path editor, export, and import |
-| `tests/` | Node tests for bookmark indexing, events, ranking, and omnibox UI |
+| `tests/` | Node tests for bookmark indexing, events, ranking, and integration |
 | `icons/` | Toolbar and page icons; `icon.svg` is the source |
 
 ## Architecture

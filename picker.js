@@ -116,6 +116,7 @@ const HostJumperPicker = (() => {
     }
 
     .hd-item-label,
+    .hd-item-path,
     .hd-item-url {
       display: block;
       overflow: hidden;
@@ -142,12 +143,19 @@ const HostJumperPicker = (() => {
       color: rgba(255, 255, 255, 0.78);
     }
 
+    .hd-item-path {
+      margin-top: 3px;
+      color: #9db4ff;
+      font-size: 11px;
+    }
+
     .hd-item-url {
       margin-top: 2px;
       color: #b9bbc6;
       font-size: 12px;
     }
 
+    .hd-item[aria-selected="true"] .hd-item-path,
     .hd-item[aria-selected="true"] .hd-item-url {
       color: rgba(255, 255, 255, 0.86);
     }
@@ -185,10 +193,13 @@ const HostJumperPicker = (() => {
   `;
 
   function mount(root, options) {
-    const items = options.items || [];
+    let items = (options.items || []).slice();
     const embedded = Boolean(options.embedded);
     let filtered = items.slice();
     let selectedIndex = 0;
+    let searchTimer = null;
+    let searchRevision = 0;
+    let searchFailed = false;
 
     const wrap = document.createElement("div");
     wrap.className = embedded ? "hd-root is-embedded" : "hd-root";
@@ -203,12 +214,12 @@ const HostJumperPicker = (() => {
     dialog.className = "hd-dialog";
     dialog.setAttribute("role", "dialog");
     dialog.setAttribute("aria-modal", "true");
-    dialog.setAttribute("aria-label", "Host Jumper");
+    dialog.setAttribute("aria-label", options.ariaLabel || "Host Jumper");
 
     const search = document.createElement("input");
     search.className = "hd-search";
     search.type = "search";
-    search.placeholder = "Search paths";
+    search.placeholder = options.searchPlaceholder || "Search paths";
     search.autocomplete = "off";
     search.spellcheck = false;
 
@@ -228,7 +239,10 @@ const HostJumperPicker = (() => {
     configure.type = "button";
     configure.textContent = "Configure paths";
 
-    footer.append(hint, configure);
+    footer.append(hint);
+    if (options.showConfigure !== false) {
+      footer.append(configure);
+    }
     dialog.append(search, body, footer);
     overlay.append(dialog);
     wrap.append(overlay);
@@ -240,6 +254,11 @@ const HostJumperPicker = (() => {
     }
 
     function teardown() {
+      searchRevision += 1;
+      if (searchTimer != null) {
+        window.clearTimeout(searchTimer);
+        searchTimer = null;
+      }
       window.removeEventListener("keydown", onKeyDown, true);
       root.replaceChildren();
     }
@@ -274,13 +293,22 @@ const HostJumperPicker = (() => {
         return;
       }
 
+      if (searchFailed) {
+        body.replaceChildren(statusMessage("hd-error", options.searchErrorMessage || "Search is unavailable."));
+        return;
+      }
+
       if (!items.length) {
-        body.replaceChildren(statusMessage("hd-empty", "No paths configured yet. Add a few in the options page."));
+        const hasQuery = Boolean(search.value.trim());
+        const message = hasQuery
+          ? options.noResultsMessage || "No matching paths."
+          : options.emptyMessage || "No paths configured yet. Add a few in the options page.";
+        body.replaceChildren(statusMessage("hd-empty", message));
         return;
       }
 
       if (!filtered.length) {
-        body.replaceChildren(statusMessage("hd-empty", "No matching paths."));
+        body.replaceChildren(statusMessage("hd-empty", options.noResultsMessage || "No matching paths."));
         return;
       }
 
@@ -320,8 +348,15 @@ const HostJumperPicker = (() => {
         urlEl.className = "hd-item-url";
         urlEl.textContent = urlText;
 
-        button.title = urlText;
-        button.append(headEl, urlEl);
+        button.title = [item.displayPath, urlText].filter(Boolean).join("\n");
+        button.append(headEl);
+        if (item.displayPath) {
+          const pathEl = document.createElement("span");
+          pathEl.className = "hd-item-path";
+          pathEl.textContent = item.displayPath;
+          button.append(pathEl);
+        }
+        button.append(urlEl);
         button.addEventListener("mouseenter", () => {
           selectedIndex = index;
           updateSelection();
@@ -370,12 +405,56 @@ const HostJumperPicker = (() => {
       }
     }
 
+    async function runSearch(query, revision) {
+      try {
+        const results = await options.onSearch(query);
+        if (revision !== searchRevision) {
+          return;
+        }
+        items = Array.isArray(results) ? results.slice() : [];
+        filtered = items.slice();
+        selectedIndex = 0;
+        render();
+      } catch (error) {
+        if (revision !== searchRevision) {
+          return;
+        }
+        items = [];
+        filtered = [];
+        searchFailed = true;
+        render();
+      }
+    }
+
     search.addEventListener("input", () => {
-      const query = search.value.trim().toLowerCase();
-      filtered = items.filter((item) => {
-        return [item.label, item.path, item.url].some((value) => String(value).toLowerCase().includes(query));
-      });
+      const query = search.value.trim();
       selectedIndex = 0;
+      searchFailed = false;
+
+      if (options.onSearch) {
+        searchRevision += 1;
+        const revision = searchRevision;
+        if (searchTimer != null) {
+          window.clearTimeout(searchTimer);
+          searchTimer = null;
+        }
+        if (!query) {
+          items = [];
+          filtered = [];
+          render();
+          return;
+        }
+        searchTimer = window.setTimeout(() => {
+          searchTimer = null;
+          void runSearch(query, revision);
+        }, options.searchDebounceMs ?? 150);
+        return;
+      }
+
+      const normalizedQuery = query.toLowerCase();
+      filtered = items.filter((item) => {
+        return [item.label, item.path, item.url].some((value) => String(value).toLowerCase().includes(normalizedQuery));
+      });
       render();
     });
 

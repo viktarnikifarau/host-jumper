@@ -18,15 +18,11 @@
     "scripting",
     "bookmarks"
   ],
-  "omnibox": {
-    "keyword": "hj"
-  },
   "background": {
     "scripts": [
       "shim.js",
       "shared.js",
       "bookmark_search.js",
-      "bookmark_omnibox.js",
       "background_script.js"
     ],
     "service_worker": "background.js"
@@ -51,6 +47,13 @@
         "mac": "MacCtrl+Shift+F"
       },
       "description": "Open Host Jumper picker"
+    },
+    "open-bookmark-search": {
+      "suggested_key": {
+        "default": "Alt+Shift+B",
+        "mac": "MacCtrl+Shift+B"
+      },
+      "description": "Search bookmarks by folder, title, or URL"
     }
   },
   "browser_specific_settings": {

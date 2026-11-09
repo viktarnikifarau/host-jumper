@@ -16,8 +16,8 @@ Firefox still uses a non-persistent event page
 Chrome 121+ ignores `background.scripts` next to `service_worker`; older
   Chrome refuses the extra key.
 Declare both: `scripts` for Firefox (`shim.js`, `shared.js`,
-  `bookmark_search.js`, `bookmark_omnibox.js`, `background_script.js`) and
-  `service_worker` for Chrome (`background.js`).
+  `bookmark_search.js`, `background_script.js`) and `service_worker` for Chrome
+  (`background.js`).
 `background.js` may only call `importScripts`.
 Do not call `importScripts` from `background_script.js`; that throws in the
   Firefox event page.
@@ -65,9 +65,12 @@ Creation, change, removal, and move events update only the affected node or
   subtree; `onImportEnded` rebuilds the tree.
 Serialize those updates through the index queue so they cannot race the initial
   build or one another.
-`bookmark_omnibox.js` owns debounce, stale-input suppression, suggestion text
-  escaping, and navigation.
-Load both files before `background_script.js` in Firefox and Chrome.
+The `open-bookmark-search` command opens `popup/index.html?mode=bookmarks`.
+`popup/script.js` selects bookmark mode, while `picker.js` owns debounce,
+  stale-input suppression, result rendering, and keyboard interaction.
+`SEARCH_BOOKMARKS` and `NAVIGATE_BOOKMARK` messages connect that shared UI to
+  the background index and tabs API.
+Bookmark popup state uses separate session keys from the saved-path picker.
 
 Chrome content scripts and extension pages expose `chrome`, not `browser`.
 `shim.js` assigns `globalThis.browser = chrome` when `browser` is missing.

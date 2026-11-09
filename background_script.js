@@ -2,6 +2,9 @@ const PICKER_WIDTH = 480;
 const PICKER_HEIGHT = 420;
 const SESSION_PENDING_TAB = "pendingTabId";
 const SESSION_PICKER_WINDOW = "pickerWindowId";
+const SESSION_BOOKMARK_SOURCE_TAB = "bookmarkSourceTabId";
+const SESSION_BOOKMARK_WINDOW = "bookmarkWindowId";
+const BOOKMARK_RESULT_LIMIT = 50;
 const PICKER_FILES = ["shim.js", "picker.js", "content_script.js"];
 const BLOCKED_URL_PREFIXES = [
   "https://addons.mozilla.org/",
@@ -10,12 +13,6 @@ const BLOCKED_URL_PREFIXES = [
 ];
 
 const bookmarkSearchIndex = HostJumperBookmarkSearch.createIndex(browser.bookmarks);
-const bookmarkOmnibox = HostJumperBookmarkOmnibox.createController({
-  index: bookmarkSearchIndex,
-  omnibox: browser.omnibox,
-  tabs: browser.tabs
-});
-bookmarkOmnibox.attach();
 
 function reportBookmarkIndexError(error) {
   console.error("Unable to update the bookmark index:", error);
@@ -44,12 +41,17 @@ browser.action.onClicked.addListener(() => {
 
 browser.commands.onCommand.addListener((command) => {
   if (command === "open-host-jumper") {
-    openPicker();
+    return openPicker();
   }
+  if (command === "open-bookmark-search") {
+    return openBookmarkSearch();
+  }
+  return undefined;
 });
 
 browser.windows.onRemoved.addListener((windowId) => {
   clearPickerWindowId(windowId);
+  clearBookmarkWindowId(windowId);
 });
 
 browser.runtime.onMessage.addListener((message, sender) => {
@@ -59,6 +61,14 @@ browser.runtime.onMessage.addListener((message, sender) => {
 
   if (message?.type === "NAVIGATE") {
     return navigateTo(message.url, sender.tab?.id, message.newTab, message.pathId);
+  }
+
+  if (message?.type === "SEARCH_BOOKMARKS") {
+    return bookmarkSearchIndex.search(message.query, { limit: BOOKMARK_RESULT_LIMIT });
+  }
+
+  if (message?.type === "NAVIGATE_BOOKMARK") {
+    return navigateBookmark(message.url, sender.tab?.id, message.newTab);
   }
 
   if (message?.type === "RECORD_USAGE") {
@@ -72,6 +82,12 @@ browser.runtime.onMessage.addListener((message, sender) => {
 
   return undefined;
 });
+
+async function openBookmarkSearch() {
+  const tab = await getActiveTab();
+  await setSessionValue(SESSION_BOOKMARK_SOURCE_TAB, tab?.id ?? null);
+  await openBookmarkSearchWindow();
+}
 
 async function openPicker() {
   const tab = await getActiveTab();
@@ -112,21 +128,29 @@ async function toggleOrOpenOverlay(tab) {
 }
 
 async function openPickerWindow() {
-  const existingId = await getSessionValue(SESSION_PICKER_WINDOW);
+  await openSessionWindow(SESSION_PICKER_WINDOW, "popup/index.html");
+}
+
+async function openBookmarkSearchWindow() {
+  await openSessionWindow(SESSION_BOOKMARK_WINDOW, "popup/index.html?mode=bookmarks");
+}
+
+async function openSessionWindow(sessionKey, url) {
+  const existingId = await getSessionValue(sessionKey);
   if (existingId != null) {
     try {
       await browser.windows.remove(existingId);
     } catch (error) {
       // Window may already have been closed.
     }
-    await setSessionValue(SESSION_PICKER_WINDOW, null);
+    await setSessionValue(sessionKey, null);
   }
 
   const currentWindow = await browser.windows.getCurrent();
   const left = Math.round((currentWindow.left || 0) + ((currentWindow.width || PICKER_WIDTH) - PICKER_WIDTH) / 2);
   const top = Math.round((currentWindow.top || 0) + ((currentWindow.height || PICKER_HEIGHT) - PICKER_HEIGHT) / 2);
   const popup = await browser.windows.create({
-    url: browser.runtime.getURL("popup/index.html"),
+    url: browser.runtime.getURL(url),
     type: "popup",
     width: PICKER_WIDTH,
     height: PICKER_HEIGHT,
@@ -134,7 +158,7 @@ async function openPickerWindow() {
     top
   });
 
-  await setSessionValue(SESSION_PICKER_WINDOW, popup.id);
+  await setSessionValue(sessionKey, popup.id);
   try {
     await browser.windows.update(popup.id, { left, top, width: PICKER_WIDTH, height: PICKER_HEIGHT });
   } catch (error) {
@@ -194,6 +218,32 @@ async function navigateTo(url, senderTabId, newTab, pathId) {
   }
 }
 
+async function navigateBookmark(url, senderTabId, newTab) {
+  const sourceTabId = await getSessionValue(SESSION_BOOKMARK_SOURCE_TAB);
+  const tabId = sourceTabId ?? senderTabId;
+  if (!url) {
+    return;
+  }
+
+  if (newTab) {
+    const source = tabId ? await browser.tabs.get(tabId).catch(() => null) : null;
+    const createProperties = { url, active: true };
+    if (source?.id) {
+      createProperties.openerTabId = source.id;
+    }
+    if (source?.windowId != null) {
+      createProperties.windowId = source.windowId;
+    }
+    await browser.tabs.create(createProperties);
+  } else if (tabId) {
+    await browser.tabs.update(tabId, { url, active: true });
+  } else {
+    return;
+  }
+
+  await closeBookmarkSearchWindow();
+}
+
 async function getActiveTab() {
   const tabs = await browser.tabs.query({ active: true, currentWindow: true });
   return tabs[0] || null;
@@ -204,23 +254,39 @@ function isInjectableUrl(url) {
 }
 
 async function closePickerWindow() {
-  const pickerWindowId = await getSessionValue(SESSION_PICKER_WINDOW);
-  if (pickerWindowId == null) {
+  await closeSessionWindow(SESSION_PICKER_WINDOW);
+}
+
+async function closeBookmarkSearchWindow() {
+  await closeSessionWindow(SESSION_BOOKMARK_WINDOW);
+}
+
+async function closeSessionWindow(sessionKey) {
+  const windowId = await getSessionValue(sessionKey);
+  if (windowId == null) {
     return;
   }
 
   try {
-    await browser.windows.remove(pickerWindowId);
+    await browser.windows.remove(windowId);
   } catch (error) {
     // Already closed.
   }
-  await setSessionValue(SESSION_PICKER_WINDOW, null);
+  await setSessionValue(sessionKey, null);
 }
 
 async function clearPickerWindowId(windowId) {
-  const pickerWindowId = await getSessionValue(SESSION_PICKER_WINDOW);
-  if (windowId === pickerWindowId) {
-    await setSessionValue(SESSION_PICKER_WINDOW, null);
+  await clearSessionWindowId(SESSION_PICKER_WINDOW, windowId);
+}
+
+async function clearBookmarkWindowId(windowId) {
+  await clearSessionWindowId(SESSION_BOOKMARK_WINDOW, windowId);
+}
+
+async function clearSessionWindowId(sessionKey, windowId) {
+  const storedWindowId = await getSessionValue(sessionKey);
+  if (windowId === storedWindowId) {
+    await setSessionValue(sessionKey, null);
   }
 }
 
