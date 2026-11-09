@@ -67,14 +67,16 @@ Creation, change, removal, and move events update only the affected node or
   subtree; `onImportEnded` rebuilds the tree.
 Serialize those updates through the index queue so they cannot race the initial
   build or one another.
-The `open-bookmark-search` command opens `popup/index.html?mode=bookmarks`.
-`popup/script.js` selects the `bookmarks` picker variant and supplies a
-  `HostJumperBookmarkClient` data source.
+The `open-bookmark-search` command embeds the `bookmarks` picker variant as an
+  overlay on injectable pages, like the saved-path picker.
+On privileged URLs or failed injection it falls back to
+  `popup/index.html?mode=bookmarks` as a 480×420 window.
+Both surfaces supply a `HostJumperBookmarkClient` data source.
 Variant presets in `picker.js` own variant-specific labels and status messages;
   the picker owns debounce, stale-input suppression, rendering, and keyboard
   interaction.
-`bookmark_client.js` centralizes the `bookmarks.search` and `bookmarks.open`
-  protocol used by both the popup and background script.
+`bookmark_client.js` centralizes the `bookmarks.search`, `bookmarks.open`, and
+  overlay-toggle protocol used by the popup, content script, and background.
 Bookmark popup state uses separate session keys from the saved-path picker.
 
 Chrome content scripts and extension pages expose `chrome`, not `browser`.

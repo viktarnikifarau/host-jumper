@@ -5,7 +5,7 @@ const SESSION_PICKER_WINDOW = "pickerWindowId";
 const SESSION_BOOKMARK_SOURCE_TAB = "bookmarkSourceTabId";
 const SESSION_BOOKMARK_WINDOW = "bookmarkWindowId";
 const BOOKMARK_RESULT_LIMIT = 50;
-const PICKER_FILES = ["shim.js", "path_picker_client.js", "picker.js", "content_script.js"];
+const PICKER_FILES = ["shim.js", "bookmark_client.js", "path_picker_client.js", "picker.js", "content_script.js"];
 const BLOCKED_URL_PREFIXES = [
   "https://addons.mozilla.org/",
   "https://chrome.google.com/webstore",
@@ -85,8 +85,19 @@ browser.runtime.onMessage.addListener((message, sender) => {
 
 async function openBookmarkSearch() {
   const tab = await getActiveTab();
-  await setSessionValue(SESSION_BOOKMARK_SOURCE_TAB, tab?.id ?? null);
-  await openBookmarkSearchWindow();
+  if (!tab?.id || !isInjectableUrl(tab.url)) {
+    await setSessionValue(SESSION_BOOKMARK_SOURCE_TAB, tab?.id ?? null);
+    await openBookmarkSearchWindow();
+    return;
+  }
+
+  await setSessionValue(SESSION_BOOKMARK_SOURCE_TAB, null);
+  try {
+    await toggleOrOpenOverlay(tab, { type: HostJumperBookmarkClient.MESSAGES.TOGGLE });
+  } catch (error) {
+    await setSessionValue(SESSION_BOOKMARK_SOURCE_TAB, tab.id);
+    await openBookmarkSearchWindow();
+  }
 }
 
 async function openPicker() {
@@ -103,27 +114,24 @@ async function openPicker() {
   }
 
   try {
-    await toggleOrOpenOverlay(tab);
+    await toggleOrOpenOverlay(tab, {
+      type: HostJumperPathPickerClient.MESSAGES.TOGGLE,
+      items: await getItemsForTab(tab)
+    });
   } catch (error) {
     await openPickerWindow();
   }
 }
 
-async function toggleOrOpenOverlay(tab) {
+async function toggleOrOpenOverlay(tab, message) {
   try {
-    await browser.tabs.sendMessage(tab.id, {
-      type: HostJumperPathPickerClient.MESSAGES.TOGGLE,
-      items: await getItemsForTab(tab)
-    });
+    await browser.tabs.sendMessage(tab.id, message);
   } catch (error) {
     await browser.scripting.executeScript({
       target: { tabId: tab.id },
       files: PICKER_FILES
     });
-    await browser.tabs.sendMessage(tab.id, {
-      type: HostJumperPathPickerClient.MESSAGES.TOGGLE,
-      items: await getItemsForTab(tab)
-    });
+    await browser.tabs.sendMessage(tab.id, message);
   }
 }
 

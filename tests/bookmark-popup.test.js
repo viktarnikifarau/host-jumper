@@ -20,7 +20,7 @@ function event() {
   };
 }
 
-function createBrowser() {
+function createBrowser({ tabUrl = "https://current.example.test/", failSendMessage = false } = {}) {
   const session = {};
   const api = {
     action: { onClicked: event() },
@@ -66,11 +66,12 @@ function createBrowser() {
     tabs: {
       updates: [],
       created: [],
+      sentMessages: [],
       async query() {
-        return [{ id: 17, windowId: 7, url: "https://current.example.test/" }];
+        return [{ id: 17, windowId: 7, url: tabUrl }];
       },
       async get(id) {
-        return { id, windowId: 7, url: "https://current.example.test/" };
+        return { id, windowId: 7, url: tabUrl };
       },
       async update(id, properties) {
         this.updates.push({ id, ...properties });
@@ -78,9 +79,22 @@ function createBrowser() {
       async create(properties) {
         this.created.push(properties);
       },
-      async sendMessage() {}
+      async sendMessage(tabId, message) {
+        this.sentMessages.push({ tabId, message });
+        if (failSendMessage) {
+          throw new Error("Could not establish connection");
+        }
+      }
     },
-    scripting: { async executeScript() {} },
+    scripting: {
+      executions: [],
+      async executeScript(details) {
+        this.executions.push(details);
+        if (failSendMessage) {
+          throw new Error("Cannot script this tab");
+        }
+      }
+    },
     storage: {
       session: {
         async get(key) {
@@ -111,8 +125,60 @@ test("manifest registers the bookmark shortcut without omnibox integration", () 
   assert.equal(fs.existsSync(path.join(root, "bookmark_omnibox.js")), false);
 });
 
-test("shortcut opens bookmark popup, searches, navigates, and closes it", async () => {
+test("shortcut embeds the bookmark picker in an injectable page", async () => {
   const { api, session } = createBrowser();
+  loadScripts(["shared.js", "bookmark_search.js", "bookmark_client.js", "path_picker_client.js", "background_script.js"], { browser: api });
+
+  await api.commands.onCommand.listeners[0]("open-bookmark-search");
+
+  assert.equal(api.windows.created.length, 0);
+  assert.equal(session.bookmarkSourceTabId, undefined);
+  assert.equal(session.bookmarkWindowId, undefined);
+  assert.deepEqual(plain(api.tabs.sentMessages), [{
+    tabId: 17,
+    message: { type: "bookmarks.toggle" }
+  }]);
+  assert.equal(api.scripting.executions.length, 0);
+});
+
+test("shortcut injects the picker scripts when the page has no content script yet", async () => {
+  const { api } = createBrowser({ failSendMessage: false });
+  loadScripts(["shared.js", "bookmark_search.js", "bookmark_client.js", "path_picker_client.js", "background_script.js"], { browser: api });
+
+  let calls = 0;
+  api.tabs.sendMessage = async function (tabId, message) {
+    this.sentMessages.push({ tabId, message });
+    calls += 1;
+    if (calls === 1) {
+      throw new Error("Could not establish connection");
+    }
+  };
+
+  await api.commands.onCommand.listeners[0]("open-bookmark-search");
+
+  assert.equal(api.windows.created.length, 0);
+  assert.equal(api.scripting.executions.length, 1);
+  assert.deepEqual(plain(api.scripting.executions[0]), {
+    target: { tabId: 17 },
+    files: ["shim.js", "bookmark_client.js", "path_picker_client.js", "picker.js", "content_script.js"]
+  });
+  assert.equal(api.tabs.sentMessages.length, 2);
+  assert.equal(api.tabs.sentMessages[1].message.type, "bookmarks.toggle");
+});
+
+test("shortcut falls back to the bookmark popup when the page is not injectable", async () => {
+  const { api, session } = createBrowser({ failSendMessage: true });
+  loadScripts(["shared.js", "bookmark_search.js", "bookmark_client.js", "path_picker_client.js", "background_script.js"], { browser: api });
+
+  await api.commands.onCommand.listeners[0]("open-bookmark-search");
+
+  assert.equal(api.windows.created.length, 1);
+  assert.equal(api.windows.created[0].url, "popup/index.html?mode=bookmarks");
+  assert.equal(session.bookmarkSourceTabId, 17);
+});
+
+test("bookmark popup searches, navigates, and closes", async () => {
+  const { api, session } = createBrowser({ tabUrl: "about:newtab" });
   loadScripts(["shared.js", "bookmark_search.js", "bookmark_client.js", "path_picker_client.js", "background_script.js"], { browser: api });
 
   await api.commands.onCommand.listeners[0]("open-bookmark-search");
@@ -138,8 +204,21 @@ test("shortcut opens bookmark popup, searches, navigates, and closes it", async 
   assert.equal(session.bookmarkWindowId, undefined);
 });
 
-test("bookmark popup can open a new tab next to its source tab", async () => {
+test("embedded bookmark picker navigates the sender tab", async () => {
   const { api } = createBrowser();
+  loadScripts(["shared.js", "bookmark_search.js", "bookmark_client.js", "path_picker_client.js", "background_script.js"], { browser: api });
+  await api.commands.onCommand.listeners[0]("open-bookmark-search");
+
+  const onMessage = api.runtime.onMessage.listeners[0];
+  const url = "https://server1.ci.example.test/";
+  await onMessage({ type: "bookmarks.open", url, newTab: false }, { tab: { id: 17 } });
+
+  assert.deepEqual(plain(api.tabs.updates), [{ id: 17, url, active: true }]);
+  assert.deepEqual(api.windows.removed, []);
+});
+
+test("bookmark popup can open a new tab next to its source tab", async () => {
+  const { api } = createBrowser({ tabUrl: "about:newtab" });
   loadScripts(["shared.js", "bookmark_search.js", "bookmark_client.js", "path_picker_client.js", "background_script.js"], { browser: api });
   await api.commands.onCommand.listeners[0]("open-bookmark-search");
 

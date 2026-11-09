@@ -87,8 +87,10 @@ On privileged URLs, or when injection fails, it opens as a small window instead.
 
 ### Bookmark search
 
-Open the bookmark popup with `Alt+Shift+B` on Linux/Windows or
+Open the bookmark search with `Alt+Shift+B` on Linux/Windows or
   `MacCtrl+Shift+B` on macOS.
+Like the path picker, it is an overlay on injectable pages and opens as a small
+  window on privileged URLs.
 Every whitespace-separated token must match the bookmark's full folder path,
   title, or URL; token order does not matter.
 Each result shows the bookmark name, full readable path, and URL.
@@ -184,7 +186,7 @@ It skips `https://addons.mozilla.org/` and the Chrome Web Store.
 | `path_picker_client.js` | Shared path-picker protocol for popup and overlay clients |
 | `picker.js` | Shared picker variants, local filtering, and debounced async search |
 | `content_script.js` | Overlay host and closed [Shadow DOM] |
-| `popup/` | Fallback path picker and shortcut-opened bookmark search window |
+| `popup/` | Fallback windows for the path picker and bookmark search |
 | `options/` | Path editor, export, and import |
 | `tests/` | Node tests for bookmark indexing, events, ranking, and integration |
 | `icons/` | Toolbar and page icons; `icon.svg` is the source |

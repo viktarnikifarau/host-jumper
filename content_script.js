@@ -7,27 +7,38 @@
   let host = null;
   let picker = null;
   const pathPickerClient = HostJumperPathPickerClient.create(browser.runtime);
+  const bookmarkClient = HostJumperBookmarkClient.create(browser.runtime);
 
   browser.runtime.onMessage.addListener((message) => {
-    if (message?.type !== HostJumperPathPickerClient.MESSAGES.TOGGLE) {
+    if (message?.type === HostJumperPathPickerClient.MESSAGES.TOGGLE) {
+      toggle(() => openPathPicker(message.items || []));
       return;
     }
 
+    if (message?.type === HostJumperBookmarkClient.MESSAGES.TOGGLE) {
+      toggle(openBookmarkPicker);
+    }
+  });
+
+  function toggle(open) {
     if (host) {
       closePicker();
       return;
     }
+    open();
+  }
 
-    openPicker(message.items || []);
-  });
+  function createHost() {
+    const element = document.createElement("div");
+    element.setAttribute("data-host-jumper", "true");
+    const shadow = element.attachShadow({ mode: "closed" });
+    document.documentElement.append(element);
+    return { element, shadow };
+  }
 
-  function openPicker(items) {
-    host = document.createElement("div");
-    host.setAttribute("data-host-jumper", "true");
-    const shadow = host.attachShadow({ mode: "closed" });
-    document.documentElement.append(host);
-
-    picker = HostJumperPicker.mount(shadow, {
+  function openPathPicker(items) {
+    host = createHost();
+    picker = HostJumperPicker.mount(host.shadow, {
       variant: "pathpicker",
       items,
       onSelect(item, { newTab } = {}) {
@@ -47,10 +58,23 @@
     });
   }
 
+  function openBookmarkPicker() {
+    host = createHost();
+    picker = HostJumperPicker.mount(host.shadow, {
+      variant: "bookmarks",
+      dataSource: bookmarkClient,
+      onSelect(item, { newTab } = {}) {
+        closePicker();
+        bookmarkClient.open(item.url, newTab);
+      },
+      onClose: closePicker
+    });
+  }
+
   function closePicker() {
     picker?.close();
     picker = null;
-    host?.remove();
+    host?.element.remove();
     host = null;
   }
 })();

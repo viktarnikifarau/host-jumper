@@ -1,7 +1,8 @@
 const HostJumperBookmarkClient = (() => {
   const MESSAGES = Object.freeze({
     SEARCH: "bookmarks.search",
-    OPEN: "bookmarks.open"
+    OPEN: "bookmarks.open",
+    TOGGLE: "bookmarks.toggle"
   });
 
   function create(runtime) {
