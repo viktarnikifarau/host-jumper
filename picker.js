@@ -426,6 +426,15 @@ const HostJumperPicker = (() => {
       }
     }
 
+    // Keystrokes are composed events, so they bubble out of the shadow root
+    // with the target retargeted to the host element. Pages like Jira then see
+    // a plain <div> as the target and fire single-key shortcuts (e.g. "C" for
+    // create) while the user is typing. Stop propagation at the bubble phase so
+    // the search input still receives the keys, but the page never does.
+    function isolateKeystrokes(event) {
+      event.stopPropagation();
+    }
+
     async function runSearch(query, revision) {
       try {
         const results = await options.dataSource.search(query);
@@ -490,6 +499,9 @@ const HostJumperPicker = (() => {
     });
 
     window.addEventListener("keydown", onKeyDown, true);
+    for (const type of ["keydown", "keypress", "keyup"]) {
+      wrap.addEventListener(type, isolateKeystrokes);
+    }
     render();
     search.focus();
 
