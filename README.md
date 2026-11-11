@@ -4,8 +4,8 @@ Host Jumper is a [Firefox] and [Chrome] [WebExtension] that jumps to saved
   relative paths on the current site.
 Each path can include `{placeholders}` filled from the current page [URL].
 
-Open the picker with `Ctrl+Shift+F` (the same chord on macOS) or the toolbar
-  button.
+Open the picker with `Alt+Shift+J` (Mnemonic of "Jump") on Windows/Linux or `Option+Shift+J` on
+  macOS, or use the toolbar button.
 Choose a path to replace the current origin's path, query, and hash, leaving
   the host unchanged.
 
@@ -85,10 +85,29 @@ npx web-ext build
 The picker is an overlay on injectable pages.
 On privileged URLs, or when injection fails, it opens as a small window instead.
 
+### Keyboard shortcuts
+
+| Action | Windows/Linux | macOS |
+| --- | --- | --- |
+| Open the path picker | `Alt+Shift+J` | `Option+Shift+J` |
+| Search bookmarks | `Alt+Shift+K` | `Option+Shift+K` |
+
+The manifest uses `Alt` for both commands.
+WebExtensions map `Alt` to Option on macOS, so the physical key positions match
+  Windows and Linux.
+On Windows/Linux, `Ctrl+Shift+B` (bookmarks bar), `Ctrl+Shift+O` (bookmarks
+  manager), and `Ctrl+Shift+P` (private window in Firefox/Zen) are
+  browser-reserved.
+On Windows/Linux, `Alt+Shift+B` is Chrome's focus-bookmarks-bar shortcut, and
+  Chrome does not auto-assign reserved accelerators to extensions.
+Bookmark search therefore uses `Alt+Shift+K` instead.
+Users can rebind both shortcuts at `chrome://extensions/shortcuts` or
+  `about:addons` > **Manage Extension Shortcuts**.
+
 ### Bookmark search
 
-Open the bookmark search with `Alt+Shift+B` on Linux/Windows or
-  `MacCtrl+Shift+B` on macOS.
+Open the bookmark search with `Alt+Shift+K` on Windows/Linux or
+  `Option+Shift+K` on macOS.
 Like the path picker, it is an overlay on injectable pages and opens as a small
   window on privileged URLs.
 Every whitespace-separated token must match the bookmark's full folder path,

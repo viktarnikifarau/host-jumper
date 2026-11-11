@@ -117,12 +117,21 @@ test("manifest registers the bookmark shortcut without omnibox integration", () 
   const manifest = JSON.parse(fs.readFileSync(path.join(root, "manifest.json"), "utf8"));
   const command = manifest.commands["open-bookmark-search"];
 
-  assert.equal(command.suggested_key.default, "Alt+Shift+B");
-  assert.equal(command.suggested_key.mac, "MacCtrl+Shift+B");
+  assert.equal(command.suggested_key.default, "Alt+Shift+K");
+  assert.equal(Object.hasOwn(command.suggested_key, "mac"), false);
   assert.equal(Object.hasOwn(manifest, "omnibox"), false);
   assert.ok(manifest.permissions.includes("bookmarks"));
   assert.equal(manifest.background.scripts.some((script) => script.includes("omnibox")), false);
   assert.equal(fs.existsSync(path.join(root, "bookmark_omnibox.js")), false);
+});
+
+test("manifest registers the path picker shortcut", () => {
+  const root = path.join(__dirname, "..");
+  const manifest = JSON.parse(fs.readFileSync(path.join(root, "manifest.json"), "utf8"));
+  const command = manifest.commands["open-host-jumper"];
+
+  assert.equal(command.suggested_key.default, "Alt+Shift+J");
+  assert.equal(Object.hasOwn(command.suggested_key, "mac"), false);
 });
 
 test("shortcut embeds the bookmark picker in an injectable page", async () => {
