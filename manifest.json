@@ -45,13 +45,15 @@
   "commands": {
     "open-host-jumper": {
       "suggested_key": {
-        "default": "Alt+Shift+J"
+        "default": "Alt+Shift+J",
+        "mac": "MacCtrl+Shift+J"
       },
       "description": "Open Host Jumper picker"
     },
     "open-bookmark-search": {
       "suggested_key": {
-        "default": "Alt+Shift+K"
+        "default": "Alt+Shift+K",
+        "mac": "MacCtrl+Shift+K"
       },
       "description": "Search bookmarks by folder, title, or URL"
     }
