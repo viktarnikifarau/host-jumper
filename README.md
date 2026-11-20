@@ -1,10 +1,11 @@
 # Host Jumper
 
 Host Jumper is a [Firefox] and [Chrome] [WebExtension] that jumps to saved
-  relative paths on the current site.
+  relative paths on the current site and searches bookmarks by folder path,
+  title, or URL.
 Each path can include `{placeholders}` filled from the current page [URL].
 
-Open the picker with `Alt+Shift+J` (Mnemonic of "Jump") on Windows/Linux or `Control+Shift+J` on
+Open the path picker with `Alt+Shift+J` (Mnemonic of "Jump") on Windows/Linux or `Control+Shift+J` on
   macOS, or use the toolbar button.
 Choose a path to replace the current origin's path, query, and hash, leaving
   the host unchanged.
